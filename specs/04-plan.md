@@ -6,19 +6,19 @@
 ## 1. Основа
 - Стартер: `.starter/` NikitOS (Next.js 16, статический экспорт, Tailwind 4, shadcn/ui).
 - Репозиторий: github.com/nikalimp/Perlova; на Mac — `~/Desktop/Евгения Перлова/site/` (синхронизация `.sync`). Работа агента — ветки `claude/*` и PR.
-- Хостинг: REG.RU Ника. Выкладка: GitHub Actions (deploy-kit) — FTP (у REG.RU порт 22 для GitHub закрыт); до pre-flight — `manual-zip`.
+- Хостинг: REG.RU Ника. Выкладка: GitHub Actions (deploy-kit) — FTP (у REG.RU порт 22 для GitHub закрыт); с 2026-10-29 — `ssh-ftp` (работает FTP).
 - Адрес: perlova.nikalimp.ru — он же боевой (тестового нет: нового трафика нет, решение ускоренного режима).
 
 ### Pre-flight хостинга
 Пока не зелёное — FTP-секреты не заводим, дату запуска не называем.
 | Проверка | Результат | Дата |
 |---|---|---|
-| Поддомен perlova.nikalimp.ru: A-запись или папка поддомена в панели REG.RU | ❓ Ник | |
-| FTP-доступ к папке поддомена (`FTP_HOST`, `FTP_USER`, `FTP_PASS`, `FTP_DIR`) | ❓ Ник | |
-| HTTPS: сертификат на поддомен, редирект http → https | ❓ | |
+| Поддомен perlova.nikalimp.ru: A-запись или папка поддомена в панели REG.RU | ✅ открывается заглушка REG.RU | 2026-10-29 |
+| FTP-доступ к папке поддомена (`FTP_HOST`, `FTP_USER`, `FTP_PASS`, `FTP_DIR`) | ✅ секреты заведены мастером `scripts/wizard-hosting.sh` | 2026-10-29 |
+| HTTPS: сертификат на поддомен, редирект http → https | ✅ https открывается | 2026-10-29 |
 | `.htaccess`: 404 и `trailingSlash` | ❓ | |
 | Видео и тяжёлые файлы — не нужны (сцены — код), отдача JS со сжатием gzip/br | ❓ | |
-| Пробная выкладка из Actions по FTP | ❓ | |
+| Пробная выкладка из Actions по FTP | ⏳ PR «Выкладка по FTP» | 2026-10-29 |
 
 - Исключения из стандарта: spec §9.
 
