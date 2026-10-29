@@ -76,6 +76,12 @@ export default async function BookPage({ params }: { params: Promise<{ slug: str
             </div>
             <div>
               <h2 className="mb-4 text-2xl font-semibold tracking-tight">Мир книги</h2>
+              {b.planet && (
+                <figure className="mb-4">
+                  <img src={`/world/${b.planet}.webp`} srcSet={`/world/${b.planet}.webp 720w, /world/${b.planet}@2x.webp 1440w`} sizes="(min-width: 640px) 360px, 100vw" alt={`Планета книги «${b.title}» из 3D-мира на главной`} loading="lazy" width={720} height={450} className="aspect-[16/10] w-full rounded-xl object-cover" />
+                  <figcaption className="mt-2 text-sm text-muted-foreground"><a href={`/#planet-${b.planet}`} className="underline underline-offset-4">Облететь планету на главной</a></figcaption>
+                </figure>
+              )}
               <p>{b.world}</p>
               <h3 className="mt-6 font-semibold">Коротко о книге</h3>
               <ul className="mt-2 list-disc space-y-1.5 pl-5 text-muted-foreground">{b.facts.map((f) => <li key={f}>{f}</li>)}</ul>

@@ -23,6 +23,13 @@ const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 400);
 
 // ---------- свет ----------
 const hemi = new THREE.HemisphereLight(0xffe6ef, 0x8a6a55, 1.15); scene.add(hemi);
+// Лунный свет и звёзды — включаются ночью (рекомендация Д6)
+const moonLight = new THREE.DirectionalLight(0xc9d4ff, 0); scene.add(moonLight, moonLight.target);
+const starGeo = new THREE.BufferGeometry(); const starPos = [];
+for (let i = 0; i < 900; i++) { const u = Math.random() * Math.PI * 2, v = Math.random() * 0.45 + 0.05, r = 260; starPos.push(55 + Math.cos(u) * Math.cos(v) * r, Math.sin(v) * r, -50 + Math.sin(u) * Math.cos(v) * r); }
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false }));
+scene.add(stars);
 const sun = new THREE.DirectionalLight(0xfff0dd, 2.4);
 sun.castShadow = true; sun.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
 Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 13, bottom: -9, near: 1, far: 70 });
@@ -132,8 +139,9 @@ function say(text, anchor) {
 }
 function lily(force) {
   const open = P.kuv.toggle(force);
-  verse.textContent = open ? '«Тебе кувшинок корабли / Закатных сказок привезли»' : '';
-  verse.classList.toggle('on', open);
+  const line = open ? '«Тебе кувшинок корабли / Закатных сказок привезли»' : '';
+  verse.textContent = line; verse.classList.toggle('on', open);
+  const inline = document.getElementById('verseInline'); if (inline) inline.textContent = line; // телефон: строка в карточке
   document.getElementById('lilyBtn')?.setAttribute('aria-pressed', String(open));
 }
 const onClick = (e) => {
@@ -182,7 +190,14 @@ function tick() {
   root.style.setProperty('--sky-top', '#' + s.top.getHexString());
   root.style.setProperty('--sky-bottom', '#' + s.bottom.getHexString());
   // за полкой мир гаснет: дальше обычная страница
-  canvas.style.opacity = String(1 - Math.min(1, Math.max(0, (scrollY - anchors[anchors.length - 1][0]) / innerHeight)));
+  ready = Math.min(1, ready + 0.03); // плавное появление сцены (Д7)
+  const fadeOut = 1 - Math.min(1, Math.max(0, (scrollY - anchors[anchors.length - 1][0]) / innerHeight));
+  canvas.style.opacity = String(ready * fadeOut);
+  const night = Math.min(1, Math.max(0, (p - 0.68) / 0.12));
+  moonLight.intensity = night * 1.3; hemi.intensity = 1.15 + night * 0.55; stars.material.opacity = night * 0.9;
+  // активная точка маршрута (Д3)
+  const railId = p < 0.27 ? 'planet-kuv' : p < 0.49 ? 'planet-dub' : p < 0.66 ? 'planet-fan' : p < 0.95 ? 'planet-asf' : 'shelf';
+  if (railId !== lastRail) { lastRail = railId; document.querySelectorAll('[data-rail]').forEach((a) => a.toggleAttribute('aria-current', false)); document.querySelector(`[data-rail="${railId}"]`)?.setAttribute('aria-current', 'step'); }
   scene.fog.color.copy(s.fog);
   hemi.color.copy(s.hs); hemi.groundColor.copy(s.hg);
   sun.color.copy(s.sun); sun.intensity = s.si;
@@ -193,6 +208,7 @@ function tick() {
   v.set(...POS[k]);
   sun.target.position.copy(v); sun.position.copy(v).add(new THREE.Vector3(-8, 18, 10));
   rim.target.position.copy(v); rim.position.copy(v).add(new THREE.Vector3(10, 6, -10));
+  moonLight.target.position.copy(v); moonLight.position.copy(v).add(new THREE.Vector3(-20, 30, 15));
 
   if (p > 0.22 && P.kuv.open) lily(0);
   P.kuv.update(t, reduce);
@@ -212,14 +228,16 @@ function tick() {
     if (performance.now() > bubbleUntil) { bubble.classList.remove('on'); bubbleAnchor = null; }
   }
 
-  if (canvas.style.opacity !== '0') renderer.render(scene, camera);
-  raf = requestAnimationFrame(tick);
+  if (ready * fadeOut > 0) renderer.render(scene, camera);
+  raf = document.hidden ? 0 : requestAnimationFrame(tick); // вкладка скрыта — цикл стоит (В6)
 }
-let raf = 0;
+let raf = 0, ready = 0, lastRail = '';
+const onVis = () => { if (!document.hidden && !raf) raf = requestAnimationFrame(tick); };
+document.addEventListener('visibilitychange', onVis);
 lily(0);
 tick();
 return () => {
-  cancelAnimationFrame(raf);
+  cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', onVis);
   removeEventListener('scroll', onScroll); removeEventListener('resize', resize); ro.disconnect();
   document.removeEventListener('click', onClick);
   root.classList.remove('night');

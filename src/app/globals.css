@@ -88,36 +88,72 @@
 }
 @keyframes fade-in { from { opacity: 0; translate: 0 -4px; } to { opacity: 1; translate: none; } }
 
-/* ── Мир планет на главной (src/components/world.tsx). Без .has-world — обычная страница. ── */
-.world-canvas { display: none; }
-.world-only { display: none; }
-.world-spacer { display: none; }
+/* ── Мир планет на главной (src/components/world.tsx). Без .has-world — обычная страница с постерами планет. ── */
+.world-canvas, .world-only, .world-spacer, .world-rail, .verse-inline { display: none; }
 .world-flow { padding: 2rem 0; }
 .world-sec { padding: 1rem 1rem; display: flex; justify-content: center; }
 .world-card { width: 100%; max-width: 560px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px 24px; }
 .world-card.wide { max-width: 980px; }
+.world-card.planet { border-left: 4px solid var(--planet); }
+.world-poster { display: block; width: calc(100% + 48px); max-width: none; margin: -22px -24px 18px -20px; border-radius: 16px 16px 0 0; aspect-ratio: 16 / 10; object-fit: cover; background: var(--secondary); }
 .world-eyebrow { font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 4px; }
-.world-chip { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 7px 13px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--foreground); }
+.card-quote { color: var(--planet); font-size: 17px; }
+.world-chip { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 7px 13px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--foreground); white-space: nowrap; }
 .world-chip:hover { border-color: var(--primary); color: var(--primary); }
 .world-chip:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .world-verse, .world-bubble { display: none; }
 
 .has-world .world-page { background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%) fixed; }
 .has-world body { background: var(--sky-bottom); }
-.has-world .world-canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; transition: opacity .2s; }
+.has-world .world-canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: 0; }
+.has-world .world-poster { display: none; }
 .has-world .world-only { display: block; }
 .has-world .world-spacer { display: block; min-height: 85vh; }
 .has-world .world-flow { position: relative; z-index: 1; pointer-events: none; padding: 0; }
 .has-world .world-sec { min-height: 100vh; align-items: flex-end; justify-content: flex-start; padding: 0 16px 7vh; }
 .has-world .world-sec.right { justify-content: flex-end; }
 .has-world .world-card { pointer-events: auto; max-width: 460px; background: color-mix(in oklch, var(--card) 86%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 10px 30px oklch(0.2 0.03 300 / 16%); border-color: transparent; transition: background .6s, color .6s; }
+.has-world .world-card.planet { border-left: 4px solid var(--planet); }
 .has-world .world-card.wide { max-width: 980px; }
 .has-world.night .world-card { background: color-mix(in oklch, var(--night) 82%, transparent); color: var(--night-foreground); }
 .has-world.night .world-card .world-eyebrow, .has-world.night .world-card .text-muted-foreground { color: var(--night-muted); }
+.has-world.night .card-quote { color: var(--night-foreground); }
 .has-world .world-verse, .has-world .world-bubble { display: block; position: fixed; z-index: 2; pointer-events: none; font-family: var(--font-serif); font-style: italic; font-size: 18px;
   color: var(--foreground); background: oklch(0.99 0.01 70 / 94%); padding: 10px 16px; border-radius: 14px; opacity: 0; transition: opacity .3s; box-shadow: 0 6px 20px oklch(0 0 0 / 12%); }
 .has-world .world-verse { left: 50%; top: 84px; transform: translateX(-50%); max-width: 360px; text-align: center; }
 .has-world .world-bubble { left: 0; top: 0; max-width: 280px; text-align: center; }
 .has-world .world-verse.on, .has-world .world-bubble.on { opacity: 1; }
 .has-world header { background: color-mix(in oklch, var(--background) 70%, transparent); }
-@media (max-width: 640px) { .has-world .world-sec { padding-bottom: 3vh; } .has-world .world-card { padding: 16px 18px; } .has-world .world-verse { top: 72px; } }
+.world-hint span { display: inline-block; animation: hint 1.6s ease-in-out infinite; }
+@keyframes hint { 50% { transform: translateY(4px); } }
+
+/* Маршрут по планетам справа */
+.has-world .world-rail { display: block; position: fixed; right: 18px; top: 50%; transform: translateY(-50%); z-index: 3; }
+.world-rail ol { display: flex; flex-direction: column; gap: 14px; list-style: none; margin: 0; padding: 0; }
+.world-rail a { display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: var(--foreground); text-decoration: none; min-height: 24px; }
+.world-rail i { width: 10px; height: 10px; border-radius: 999px; border: 2px solid currentColor; opacity: .55; transition: transform .2s, opacity .2s, background .2s; order: 2; }
+.world-rail b { font-weight: 500; font-size: 13px; opacity: 0; transform: translateX(6px); transition: opacity .2s, transform .2s; background: color-mix(in oklch, var(--card) 88%, transparent); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.world-rail a:hover b, .world-rail a:focus-visible b { opacity: 1; transform: none; }
+.world-rail a[aria-current="step"] i { background: currentColor; opacity: 1; transform: scale(1.25); }
+.world-rail a:focus-visible { outline: none; }
+.world-rail a:focus-visible i { outline: 3px solid var(--ring); outline-offset: 2px; }
+.has-world.night .world-rail a { color: var(--night-foreground); }
+.has-world.night .world-rail b { background: color-mix(in oklch, var(--night) 88%, transparent); }
+
+/* Телефон: компактные карточки — мир виден, кнопки на экране */
+@media (max-width: 640px) {
+  .has-world .world-sec { padding: 0 12px 2.5vh; }
+  .has-world .world-card { padding: 14px 16px; max-width: none; }
+  .has-world .world-card .card-cover, .has-world .world-card .card-lead { display: none; }
+  .has-world .world-card .card-quote { font-size: 15px; margin-top: 6px; }
+  .has-world .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -16px; padding-right: 16px; }
+  .has-world .world-verse { display: none; }
+  .has-world .verse-inline { display: block; min-height: 0; font-size: 15px; }
+  .has-world .world-rail { right: 8px; }
+  .has-world .world-rail b { display: none; }
+  .has-world .world-sec.intro h1 { font-size: 30px; }
+  .has-world .world-sec.intro p:not(.world-eyebrow) { font-size: 15px; }
+  .has-world .shelf { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .world-poster { margin: -22px -24px 16px -20px; }
+}
