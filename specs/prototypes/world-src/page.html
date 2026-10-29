@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Прототип: мир книг Евгении Перловой</title>
+<style>
+:root{--ink:#3a2a3f;--muted:#6d5a6e;--teal-d:#1f7f78;--march:#4A7BD0;--sky-top:#f6b3c3;--sky-bottom:#fbeee2;
+  --card:rgba(251,243,234,.86);--card-ink:#3a2a3f;--line:#ecd9cf}
+.night{--card:rgba(24,24,52,.78);--card-ink:#eef0fb;--muted:#b8bfdc;--line:#3c3f6e}
+*{box-sizing:border-box}
+html,body{margin:0;color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-bottom) 100%) fixed}
+h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;line-height:1.1;margin:.2em 0 .4em}
+h1{font-size:clamp(34px,6vw,64px)} h2{font-size:clamp(28px,4.4vw,46px)}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+main{position:relative;z-index:1;pointer-events:none}
+section{min-height:100vh;display:flex;align-items:flex-end;padding:0 16px 7vh}
+section.r{justify-content:flex-end}
+.card{pointer-events:auto;max-width:440px;background:var(--card);color:var(--card-ink);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-radius:20px;padding:22px 24px;box-shadow:0 10px 30px rgba(20,12,30,.16);transition:background .6s,color .6s}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.tag{font-size:13px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.7);color:#3a2a3f;border:1px solid var(--line)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-block;padding:10px 16px;border-radius:999px;text-decoration:none;font-weight:600;font-size:15px;border:0;cursor:pointer;font-family:inherit}
+.btn.p{background:var(--teal-d);color:#fff}.btn.s{background:#fff;color:#3a2a3f;border:1px solid #e2cfc4}
+.btn.chip{font-size:14px;padding:7px 12px}
+.btn:focus-visible{outline:3px solid var(--march);outline-offset:3px}
+.spacer{min-height:85vh}
+.badge{display:inline-block;font-size:13px;padding:4px 10px;border-radius:8px;background:#b53389;color:#fff;margin-bottom:6px}
+.counter{font-family:Georgia,serif;font-size:28px}
+.verse,.bubble{position:fixed;z-index:2;pointer-events:none;font-family:Georgia,serif;font-style:italic;font-size:18px;color:#3a2a3f;
+  background:rgba(255,250,245,.94);padding:10px 16px;border-radius:14px;opacity:0;transition:opacity .3s;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.verse{left:50%;top:9%;transform:translateX(-50%);max-width:360px;text-align:center}
+.bubble{left:0;top:0;max-width:280px;text-align:center}
+.verse.on,.bubble.on{opacity:1}
+.shelf{display:grid;gap:6px;margin:8px 0 0;padding:0;list-style:none}
+.shelf a{color:inherit}
+.no-webgl #scene{display:none}
+@media (max-width:640px){section{padding-bottom:4vh}.card{padding:18px}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<p class="verse" id="verse" role="status" aria-live="polite"></p>
+<p class="bubble" id="bubble" role="status" aria-live="polite"></p>
+<main>
+  <section data-p="0"><div class="card">
+    <div class="eyebrow">Писатель, поэт, переводчик · Екатеринбург</div>
+    <h1>Евгения Перлова</h1>
+    <p>Стихи для малышей, повести о школьнице Ясе и проза для взрослых. Листайте — полетим по книгам.</p>
+  </div></section>
+
+  <div class="spacer"></div>
+  <section data-p="0.16"><div class="card">
+    <div class="eyebrow">Стихи · 0+ · для 4–9 лет</div>
+    <h2>Кувшинки</h2>
+    <p>Звёздный кит, остров потерянных носков и мамин карман: в этих стихах обычный день ребёнка превращается в сказку. Иллюстрации Евгении Смоленцевой.</p>
+    <div class="tags"><span class="tag">Абрикобукс, 2025</span><span class="tag">48 страниц</span></div>
+    <div class="btns"><a class="btn p" href="#">О книге</a><a class="btn s" href="#">Где купить</a>
+      <button class="btn s" id="lilyBtn" type="button" aria-pressed="false">Раскрыть кувшинку</button></div>
+  </div></section>
+
+  <div class="spacer"></div>
+  <section data-p="0.39" class="r"><div class="card">
+    <div class="eyebrow">Повесть · 6+ · для 6–10 лет</div>
+    <h2>Дуб, орех и мочало</h2>
+    <p>У первоклассницы Яси есть пёс Котя, подруги Соня и Стеша и баскетбол. А ещё Яся умеет мечтать так, чтобы сбывалось.</p>
+    <div class="tags"><span class="tag">Строки, 2026</span><span class="tag">электронная и аудио</span></div>
+    <p style="margin:0 0 8px;font-size:15px">Дуб, орех или мочало? Выберите:</p>
+    <div class="btns" style="margin-bottom:12px"><button class="btn s chip" data-dub="oak" type="button">Дуб</button><button class="btn s chip" data-dub="nut" type="button">Орех</button><button class="btn s chip" data-dub="sponge" type="button">Мочало</button></div>
+    <div class="btns"><a class="btn p" href="#">О книге</a><a class="btn s" href="#">Где купить</a></div>
+  </div></section>
+
+  <div class="spacer"></div>
+  <section data-p="0.61"><div class="card">
+    <span class="badge">Финал премии им. В. П. Крапивина</span>
+    <div class="eyebrow">Повесть · 6+</div>
+    <h2>Цветные запахи лета и немного фанданго</h2>
+    <p>Яся дружит с Эриком, который не различает запахи, и объясняет их оттенками пантонного веера.</p>
+    <p style="margin:0 0 8px;font-size:15px">Понюхать цветом:</p>
+    <div class="btns" style="margin-bottom:12px"><button class="btn s chip" data-smell="well" type="button">Колодец Леденец</button><button class="btn s chip" data-smell="river" type="button">Речка</button><button class="btn s chip" data-smell="milk" type="button">Парное молоко</button><button class="btn s chip" data-smell="stone" type="button">Древнее море</button></div>
+    <div class="btns"><a class="btn p" href="#">О книге</a><a class="btn s" href="#">Где купить</a></div>
+  </div></section>
+
+  <div class="spacer"></div>
+  <section data-p="0.72" class="r"><div class="card">
+    <div class="eyebrow">16+</div>
+    <h2>Дальше — книга для взрослых читателей</h2>
+    <p>Следующая планета — роман для читателей от 16 лет.</p>
+    <div class="btns"><a class="btn s" id="skip16" href="#final">Пропустить</a></div>
+  </div></section>
+
+  <div class="spacer"></div>
+  <section data-p="0.88"><div class="card">
+    <div class="eyebrow">Роман · 16+</div>
+    <h2>Асфодель, цветок забвения</h2>
+    <p>История о брате и сестре, болезни и выздоровлении: она видит невидимое, он учится принять то, чего не видит.</p>
+    <p><span class="counter" id="steps">0</span> / 300 шагов к Городу Снегов</p>
+    <div class="tags"><span class="tag">Animedia, 2023</span><span class="tag">магический реализм</span></div>
+    <div class="btns"><a class="btn p" href="#">О книге</a><a class="btn s" href="#">Где купить</a></div>
+  </div></section>
+
+  <div class="spacer"></div>
+  <section data-p="1" id="final"><div class="card">
+    <div class="eyebrow">Книжная полка</div>
+    <h2>Все книги</h2>
+    <ul class="shelf">
+      <li><a href="#">Кувшинки</a> — 0+</li><li><a href="#">Дуб, орех и мочало</a> — 6+</li>
+      <li><a href="#">Цветные запахи лета и немного фанданго</a> — 6+</li><li><a href="#">Асфодель, цветок забвения</a> — 16+</li>
+      <li><a href="#">Танцы, огурцы и большие мечты</a> — 6+</li><li><a href="#">Дай мне руку</a> — 12+</li>
+    </ul>
+  </div></section>
+</main>
+<script>/*BUNDLE*/</script>
+</body>
+</html>
