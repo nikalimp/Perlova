@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Знак Евгении Перловой">
+  <defs>
+    <radialGradient id="pearl" cx="38%" cy="32%" r="70%">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#F8E6E4"/><stop offset=".85" stop-color="#D9C3DE"/><stop offset="1" stop-color="#9E85B3"/>
+    </radialGradient>
+  </defs>
+  <g transform="rotate(-18 32 32)">
+    <path d="M4 32a28 9 0 0 1 50 0" fill="none" stroke="#EEF0FB" stroke-opacity=".45" stroke-width="2.4"/>
+  </g>
+  <circle cx="32" cy="32" r="19" fill="url(#pearl)" stroke="#EEF0FB" stroke-opacity=".45" stroke-width="1.6"/>
+  <ellipse cx="25.5" cy="24.5" rx="5.5" ry="3.4" fill="#fff" opacity=".85" transform="rotate(-30 26.5 25.5)"/>
+  <g transform="rotate(-18 32 32)">
+    <path d="M60 32a28 9 0 0 1 -56 0" fill="none" stroke="#EEF0FB" stroke-width="2.6"/>
+    <circle cx="10" cy="38" r="4" fill="#3FB8A6"/>
+    <circle cx="24" cy="40.8" r="4" fill="#F07D24"/>
+    <circle cx="40" cy="40.8" r="4" fill="#B53389"/>
+    <circle cx="54" cy="38" r="4" fill="#2F56A6"/>
+  </g>
+</svg>
