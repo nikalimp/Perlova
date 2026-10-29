@@ -18,7 +18,7 @@ jobs:
     permissions: { contents: write }
     uses: nikalimp/deploy-kit/.github/workflows/site.yml@main
     with:
-      adapter: manual-zip          # до pre-flight хостинга, потом ssh-ftp; ssh-ftp | ftp | s3 | manual-zip | tilda
+      adapter: ssh-ftp            # REG.RU: SSH из Actions закрыт — сработает FTP (секреты FTP_* заведены мастером 2026-10-29)
       site_dir: "."               # монорепо: apps/site
       out_dir: out                # Vite: dist
       app_path: ""                # приложение в подпапке сайта: "test/app/"

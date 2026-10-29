@@ -21,7 +21,7 @@ jobs:
     uses: nikalimp/deploy-kit/.github/workflows/site.yml@main
     with:
       ref: main
-      adapter: manual-zip
+      adapter: ssh-ftp
       site_dir: "."
       out_dir: out
       url: https://perlova.nikalimp.ru
