@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Прототип: планета «Кувшинки»</title>
+<style>
+:root{
+  --ink:#3a2a3f; --muted:#6d5a6e; --paper:#fbf3ea;
+  --teal:#3FB8A6; --teal-d:#1f7f78; --lily:#F6C1A8; --lily-l:#fde6da; --leaf:#7DB04B; --leaf-d:#4f8a3a;
+  --sunset:#F4A6B8; --march:#4A7BD0; --gold:#F2C46B;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2{font-family:Georgia,"Times New Roman",serif;font-weight:600;line-height:1.1;margin:.2em 0 .4em}
+h1{font-size:clamp(34px,6vw,64px)} h2{font-size:clamp(28px,4.4vw,48px)}
+
+/* сцена */
+.stage{position:fixed;inset:0;overflow:hidden;z-index:0;
+  background:linear-gradient(180deg,#f7b9c6 0%,#fbd6cf 45%,#fbeee2 100%)}
+.stage .stars{position:absolute;inset:0;opacity:.5}
+.planet{position:absolute;left:50%;top:50%;width:min(92vmin,900px);aspect-ratio:1;
+  margin:calc(min(92vmin,900px)/-2) 0 0 calc(min(92vmin,900px)/-2);will-change:transform,opacity}
+.planet svg{width:100%;height:100%;display:block;overflow:visible}
+.whale{position:absolute;left:0;top:14%;width:min(34vmin,320px);will-change:transform;opacity:.9}
+.next{opacity:0}
+
+/* текст — обычный поток страницы, читается без JS */
+main{position:relative;z-index:1;pointer-events:none}
+.card,.card *{pointer-events:auto}
+section{min-height:100vh;display:flex;align-items:flex-end;padding:0 16px 8vh}
+.card{max-width:440px;background:rgba(251,243,234,.86);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  border-radius:20px;padding:22px 24px;box-shadow:0 10px 30px rgba(58,42,63,.12)}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+.tag{font-size:13px;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid #ecd9cf}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-block;padding:11px 18px;border-radius:999px;text-decoration:none;font-weight:600;font-size:15px}
+.btn.p{background:var(--teal-d);color:#fff} .btn.s{background:#fff;color:var(--ink);border:1px solid #e2cfc4}
+.btn:focus-visible{outline:3px solid var(--march);outline-offset:3px}
+.lily-hit{outline:none}
+.lily-hit:focus-visible{stroke:var(--march);stroke-width:6}
+.spacer{min-height:70vh}
+
+/* стих в кувшинке */
+.verse{position:fixed;left:50%;top:9%;transform:translate(-50%,8px);z-index:2;pointer-events:none;
+  max-width:340px;text-align:center;font-family:Georgia,serif;font-style:italic;font-size:19px;color:var(--ink);
+  background:rgba(255,250,245,.92);padding:12px 18px;border-radius:16px;opacity:0;transition:opacity .35s,transform .35s}
+.verse.on{opacity:1;transform:translate(-50%,0)}
+.lily-hit{cursor:pointer}
+.petals{transform-box:fill-box;transform-origin:center;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.lily.closed .petals.o{transform:scale(.32) rotate(-18deg)}
+.lily.closed .petals.i{transform:scale(.25) rotate(14deg)}
+.lily:not(.closed) .hint{opacity:0}
+.hint{transition:opacity .3s}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:.7}}
+.hint{animation:pulse 2.4s ease-in-out infinite}
+
+/* переключатель детализации — только для прототипа */
+.proto{position:fixed;top:12px;right:12px;z-index:3;display:flex;gap:6px;background:#fff;padding:6px;border-radius:999px;
+  box-shadow:0 4px 14px rgba(0,0,0,.1);font-size:13px}
+.proto button{border:0;background:transparent;padding:6px 12px;border-radius:999px;cursor:pointer;font:inherit;color:var(--ink)}
+.proto button[aria-pressed=true]{background:var(--ink);color:#fff}
+.flat .gouache-only{display:none}
+.flat .planet svg .paint{filter:none}
+
+@media (max-width:640px){.planet{top:38%}}
+@media (prefers-reduced-motion:reduce){
+  .planet,.whale{transition:none!important}
+  .petals{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="proto" role="group" aria-label="Уровень детализации (только прототип)">
+  <button type="button" data-mode="flat">Плоско</button>
+  <button type="button" data-mode="gouache" aria-pressed="true">Гуашь</button>
+</div>
+
+<div class="stage">
+  <svg aria-hidden="true" class="stars" viewBox="0 0 100 100" preserveAspectRatio="none" id="stars"></svg>
+
+  <!-- звёздный кит -->
+  <svg aria-hidden="true" class="whale" id="whale" viewBox="0 0 220 110">
+    <path class="paint" filter="url(#gouache)" fill="#3e5f9e" d="M8 66C8 36 44 22 92 24c40 2 70 14 92 34 6-14 16-24 30-30-2 14 0 24 4 34-12 0-22-2-30-6-14 22-56 40-110 40C40 96 8 88 8 66z"/>
+    <path fill="#2c4678" d="M40 82c10 6 22 10 36 11-6 6-16 9-26 8z"/>
+    <circle cx="44" cy="58" r="3.4" fill="#fff"/>
+    <g fill="#ffe7a8">
+      <circle cx="80" cy="66" r="2.2"/><circle cx="98" cy="58" r="1.6"/><circle cx="112" cy="70" r="2.6"/>
+      <circle cx="128" cy="60" r="1.5"/><circle cx="92" cy="76" r="1.4"/><circle cx="140" cy="72" r="2"/>
+    </g>
+  </svg>
+
+  <!-- планета «Кувшинки» -->
+  <div class="planet" id="p1">
+    <svg viewBox="0 0 1000 1000" id="kuv">
+      <defs>
+        <filter id="gouache" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="2"/>
+          <feColorMatrix values="0 0 0 0 .3  0 0 0 0 .2  0 0 0 0 .25  0 0 0 .22 0"/>
+        </filter>
+        <radialGradient id="water" cx="42%" cy="36%" r="70%">
+          <stop offset="0" stop-color="#7fdccb"/><stop offset=".55" stop-color="#3FB8A6"/><stop offset="1" stop-color="#1c6f6c"/>
+        </radialGradient>
+        <radialGradient id="halo" r="50%"><stop offset=".7" stop-color="#fff3e6" stop-opacity=".0"/><stop offset=".86" stop-color="#ffe9d6" stop-opacity=".75"/><stop offset="1" stop-color="#ffe9d6" stop-opacity="0"/></radialGradient>
+        <radialGradient id="shade" cx="40%" cy="35%" r="68%"><stop offset=".72" stop-color="#0c3a40" stop-opacity="0"/><stop offset="1" stop-color="#0c3a40" stop-opacity=".35"/></radialGradient>
+        <clipPath id="ball"><circle cx="500" cy="500" r="330"/></clipPath>
+      </defs>
+
+      <circle cx="500" cy="500" r="420" fill="url(#halo)"/>
+      <g class="paint" filter="url(#gouache)">
+        <circle cx="500" cy="500" r="330" fill="url(#water)"/>
+      </g>
+
+      <g clip-path="url(#ball)">
+        <!-- рябь -->
+        <g fill="none" stroke="#bff0e6" stroke-opacity=".55" stroke-width="3" stroke-linecap="round">
+          <path d="M260 420q60-14 120 0"/><path d="M560 300q50-12 100 0"/><path d="M620 640q70-16 140 0"/><path d="M300 700q40-10 80 0"/>
+        </g>
+        <!-- ивы по краю -->
+        <g class="paint" filter="url(#gouache)" fill="#5f9a46" opacity=".9" id="willow"></g>
+        <!-- листья -->
+        <g id="pads" class="paint" filter="url(#gouache)"></g>
+        <!-- маленькие кувшинки -->
+        <g id="smallLilies"></g>
+
+        <!-- лягушонок -->
+        <g transform="translate(330 610)">
+          <ellipse cx="0" cy="8" rx="34" ry="24" fill="#6fae47"/>
+          <circle cx="-14" cy="-12" r="12" fill="#6fae47"/><circle cx="14" cy="-12" r="12" fill="#6fae47"/>
+          <circle cx="-14" cy="-13" r="7" fill="#fff"/><circle cx="14" cy="-13" r="7" fill="#fff"/>
+          <circle cx="-13" cy="-12" r="3.5" fill="#2b2b2b"/><circle cx="15" cy="-12" r="3.5" fill="#2b2b2b"/>
+          <path d="M-12 10q12 8 24 0" stroke="#3c6e2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </g>
+
+        <!-- главная кувшинка (интерактив P0) -->
+        <g class="lily closed" id="lily" transform="translate(560 520)">
+          <ellipse cx="0" cy="40" rx="150" ry="62" fill="#4f8a3a" class="paint" filter="url(#gouache)"/>
+          <g class="petals o" id="outer"></g>
+          <g class="petals i" id="inner"></g>
+          <circle class="hint" cx="0" cy="0" r="70" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="4 10"/>
+          <circle cx="0" cy="0" r="22" fill="#f2c46b"/>
+          <circle cx="0" cy="0" r="12" fill="#e59f3a"/>
+          <circle class="lily-hit" cx="0" cy="0" r="120" fill="transparent" tabindex="0" role="button"
+            aria-label="Раскрыть кувшинку и прочитать строку из стихотворения «Ирис»" id="lilyHit"/>
+        </g>
+      </g>
+
+      <!-- зерно бумаги -->
+      <g clip-path="url(#ball)" class="gouache-only" pointer-events="none"><rect x="150" y="150" width="700" height="700" filter="url(#grain)" fill="#fff" style="mix-blend-mode:multiply"/></g>
+      <!-- терминатор: тень планеты -->
+      <circle cx="500" cy="500" r="330" fill="url(#shade)" pointer-events="none"/>
+    </svg>
+  </div>
+
+  <!-- следующая планета: «Дуб, орех и мочало» (заглушка) -->
+  <div class="planet next" id="p2" aria-hidden="true">
+    <svg viewBox="0 0 1000 1000">
+      <g class="paint" filter="url(#gouache)">
+        <circle cx="500" cy="500" r="300" fill="#F07D24"/>
+        <path d="M500 200v600M200 500h600M290 290q210 210 0 420M710 290q-210 210 0 420" stroke="#2a1d14" stroke-width="10" fill="none" opacity=".75"/>
+      </g>
+      <ellipse cx="500" cy="500" rx="430" ry="90" fill="none" stroke="#E8B83A" stroke-width="14" stroke-dasharray="2 30" stroke-linecap="round" transform="rotate(-14 500 500)"/>
+    </svg>
+  </div>
+</div>
+
+<p class="verse" id="verse" role="status" aria-live="polite"></p>
+
+<main>
+  <section>
+    <div class="card">
+      <div class="eyebrow">Писатель, поэт, переводчик · Екатеринбург</div>
+      <h1>Евгения Перлова</h1>
+      <p>Стихи для малышей, повести о школьнице Ясе и проза для взрослых. Листайте — полетим по книгам.</p>
+    </div>
+  </section>
+  <div class="spacer"></div>
+  <section>
+    <div class="card">
+      <div class="eyebrow">Стихи · 0+ · для 4–9 лет</div>
+      <h2>Кувшинки</h2>
+      <p>Звёздный кит, остров потерянных носков и мамин карман: в этих стихах обычный день ребёнка превращается в сказку. Иллюстрации Евгении Смоленцевой.</p>
+      <div class="tags"><span class="tag">Абрикобукс, 2025</span><span class="tag">48 страниц</span></div>
+      <div class="btns"><a class="btn p" href="#">О книге</a><a class="btn s" href="#">Где купить</a></div>
+      <p style="font-size:14px;color:var(--muted);margin:14px 0 0">Нажмите на большую кувшинку.</p>
+    </div>
+  </section>
+  <div class="spacer"></div>
+  <section>
+    <div class="card">
+      <div class="eyebrow">Повесть · 6+ · для 6–10 лет</div>
+      <h2>Дуб, орех и мочало</h2>
+      <p>Следующая планета — в прототипе только заглушка.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+
+  // звёзды
+  const stars = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) stars.appendChild(el('circle', {cx: Math.random()*100, cy: Math.random()*55, r: Math.random()*.18+.05, fill: '#fff'}));
+
+  // лист кувшинки с вырезом
+  const pad = (x, y, r, rot, c) => {
+    const a = 0.32, x1 = x + r*Math.cos(a), y1 = y + r*Math.sin(a), x2 = x + r*Math.cos(-a), y2 = y + r*Math.sin(-a);
+    return el('path', {d: `M${x} ${y}L${x1} ${y1}A${r} ${r} 0 1 1 ${x2} ${y2}Z`, fill: c, transform: `rotate(${rot} ${x} ${y})`});
+  };
+  const pads = document.getElementById('pads');
+  [[300,380,70,20],[700,360,60,140],[420,800,80,-60],[760,700,72,200],[230,560,52,90],[640,820,46,10],[520,250,50,250]]
+    .forEach(([x,y,r,rot],i) => pads.appendChild(pad(x,y,r,rot, i%2 ? '#7DB04B' : '#68a043')));
+  pads.appendChild(pad(330,640,62,160,'#5c9a3d')); // лист лягушонка
+
+  // ивы
+  const willow = document.getElementById('willow');
+  for (let i = 0; i < 9; i++) {
+    const x = 200 + i*28;
+    willow.appendChild(el('path', {d: `M${x} 150q${10+i} 120 ${-6+i*2} 260`, stroke: '#5f9a46', 'stroke-width': 10, fill: 'none', 'stroke-linecap': 'round'}));
+  }
+
+  // лепестки
+  const petals = (g, n, rx, ry, c, off) => { for (let i = 0; i < n; i++) g.appendChild(el('ellipse', {cx: 0, cy: -ry*.9, rx, ry, fill: c, transform: `rotate(${i*360/n + off})`, stroke: '#e9a98f', 'stroke-width': 2})); };
+  petals(document.getElementById('outer'), 10, 30, 78, '#F6C1A8', 0);
+  petals(document.getElementById('inner'), 8, 22, 54, '#fde6da', 22);
+
+  // маленькие кувшинки
+  const sl = document.getElementById('smallLilies');
+  [[290,370],[690,350],[770,690]].forEach(([x,y]) => {
+    const g = el('g', {transform: `translate(${x} ${y}) scale(.32)`}); petals(g, 8, 30, 70, '#F6C1A8', 0); g.appendChild(el('circle', {r: 18, fill: '#f2c46b'})); sl.appendChild(g);
+  });
+
+  // интерактив: кувшинка раскрывается и показывает строку
+  const lily = document.getElementById('lily'), hit = document.getElementById('lilyHit'), verse = document.getElementById('verse');
+  const toggle = () => {
+    const open = lily.classList.toggle('closed') === false;
+    verse.textContent = open ? '«Тебе кувшинок корабли / Закатных сказок привезли»' : '';
+    verse.classList.toggle('on', open);
+  };
+  hit.addEventListener('click', toggle);
+  hit.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+
+  // переключатель детализации (только прототип)
+  document.querySelectorAll('.proto button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.proto button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    document.documentElement.classList.toggle('flat', b.dataset.mode === 'flat');
+  }));
+
+  // полёт по скроллу
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const p1 = document.getElementById('p1'), p2 = document.getElementById('p2'), whale = document.getElementById('whale');
+  const clamp = (v, a=0, b=1) => Math.min(b, Math.max(a, v));
+  const ease = t => t<.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+  let target = 0, cur = 0, raf = 0;
+
+  const render = (p) => {
+    // 0–.3 подлёт, .3–.6 планета в центре, .6–1 пролёт и следующая планета
+    const a = ease(clamp(p/.3)), b = ease(clamp((p-.6)/.4));
+    const s1 = .32 + a*.78 + b*2.4, y1 = (1-a)*38 - b*10, r1 = (1-a)*-20 + p*12;
+    p1.style.transform = `translate3d(${(1-a)*18}vw, ${y1}vh, 0) scale(${s1}) rotate(${r1}deg)`;
+    p1.style.opacity = 1 - clamp((p-.78)/.18);
+    const s2 = .15 + b*.75;
+    p2.style.transform = `translate3d(${(1-b)*-22}vw, ${(1-b)*-30}vh, 0) scale(${s2})`;
+    p2.style.opacity = clamp((p-.55)/.25);
+    if (p > .62 && !lily.classList.contains('closed')) toggle();
+    whale.style.transform = `translate3d(${-30 + clamp((p-.15)/.6)*140}vw, ${Math.sin(p*6)*2}vh, 0)`;
+  };
+  const loop = () => { cur += (target - cur) * .12; render(cur); raf = Math.abs(target-cur) > .0005 ? requestAnimationFrame(loop) : 0; };
+  const onScroll = () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    target = max > 0 ? scrollY / max : 0;
+    if (reduce) { render(target); return; }
+    if (!raf) raf = requestAnimationFrame(loop);
+  };
+  addEventListener('scroll', onScroll, {passive: true});
+  addEventListener('resize', onScroll);
+  onScroll(); render(target);
+})();
+</script>
+</body>
+</html>
