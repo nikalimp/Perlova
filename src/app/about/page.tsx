@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { about } from "@/content/about";
+import { about, aboutVoice } from "@/content/about";
 import { books } from "@/content/books";
 import { site } from "@/content/site";
 import { Container, Section } from "@/components/container";
@@ -23,11 +23,16 @@ export default function About() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-[44px]">{about.h1}</h1>
             <p className="mt-5 text-lg leading-relaxed">{about.answer}</p>
+            <p className="mt-4 font-serif text-[18px] italic text-muted-foreground">«{aboutVoice.self.text}» — {aboutVoice.self.source}</p>
             <div className="mt-6 space-y-4 text-[17px] leading-relaxed">{about.bio.map((p) => <p key={p.slice(0, 20)}>{p}</p>)}</div>
+            <figure className="mt-8 border-l-2 border-accent pl-4">
+              <blockquote className="font-serif text-[20px] italic leading-relaxed">«{aboutVoice.quote.text}»</blockquote>
+              <figcaption className="mt-1 text-sm text-muted-foreground">{aboutVoice.quote.source}</figcaption>
+            </figure>
           </div>
-          {/* Фото автора на сайте нет — знак-жемчужина в стиле айдентики (decisions.md) */}
-          <div className="order-first flex justify-center md:order-none md:items-start">
-            <img src="/brand/sign.svg" alt="" width={200} height={200} className="size-40 md:size-52" />
+          {/* Фото автора на сайте нет (decisions.md). Иллюстрация «стол автора» в палитре мира, без человека (рекомендация Д5) */}
+          <div className="order-first md:order-none">
+            <img src="/brand/desk.svg" alt="Иллюстрация: стол автора — книги, кувшинка, тетрадь и перо" width={220} height={260} className="mx-auto w-48 md:w-full" />
           </div>
         </Container>
       </Section>

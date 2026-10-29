@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 260">
+  <!-- Стол автора: остров-стол с предметами из четырёх книг. Палитра — specs/03-design.md -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBD3E0"/><stop offset="1" stop-color="#FFF1E2"/></linearGradient>
+  </defs>
+  <rect width="220" height="260" rx="24" fill="url(#sky)"/>
+  <circle cx="168" cy="52" r="20" fill="#FFE7B8"/>
+  <ellipse cx="62" cy="58" rx="22" ry="9" fill="#fff" opacity=".85"/><ellipse cx="78" cy="52" rx="14" ry="9" fill="#fff" opacity=".85"/>
+  <!-- стол-остров -->
+  <ellipse cx="110" cy="176" rx="92" ry="24" fill="#9CCB86"/>
+  <path d="M18 176 q92 92 184 0 z" fill="#B98A6A"/>
+  <ellipse cx="110" cy="172" rx="78" ry="17" fill="#E9C9A0"/>
+  <!-- стопка книг: цвета планет -->
+  <rect x="44" y="150" width="54" height="11" rx="3" fill="#2F56A6"/>
+  <rect x="48" y="139" width="50" height="11" rx="3" fill="#B53389"/>
+  <rect x="42" y="128" width="52" height="11" rx="3" fill="#F07D24"/>
+  <rect x="46" y="117" width="48" height="11" rx="3" fill="#3FB8A6"/>
+  <!-- кувшинка в чашке -->
+  <path d="M120 140 h30 l-4 22 h-22 z" fill="#3FB8A6"/>
+  <path d="M135 140 q-12 -14 -4 -26 q4 10 4 26 q0 -16 4 -26 q8 12 -4 26" fill="#F7D6DC"/>
+  <!-- тетрадь и перо -->
+  <path d="M104 166 l46 -6 l6 10 l-46 6 z" fill="#FFFBF4"/>
+  <path d="M112 168 l34 -4" stroke="#C9B7C4" stroke-width="1.5"/>
+  <path d="M160 166 q20 -40 34 -46 q-6 18 -30 48 z" fill="#FFFBF4" stroke="#C9B7C4"/>
+  <!-- баскетбольный мяч и жёлудь -->
+  <circle cx="174" cy="172" r="8" fill="#F07D24"/><path d="M166 172 h16 M174 164 v16" stroke="#9A4A12" stroke-width="1"/>
+  <ellipse cx="34" cy="168" rx="6" ry="7" fill="#B07A4A"/><path d="M27 164 q7 -7 14 0 z" fill="#7A4E3A"/>
+</svg>
