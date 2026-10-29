@@ -1,33 +1,44 @@
 import Link from "next/link";
 import { home } from "@/content/home";
 import { about } from "@/content/about";
-import { books, planetBooks } from "@/content/books";
-import { Container, Section } from "@/components/container";
-import { BookCard, BookCover } from "@/components/book-parts";
+import { books, planetBooks, type Planet } from "@/content/books";
 import { FaqList } from "@/components/faq";
-import { Cta } from "@/components/cta";
 import { JsonLd } from "@/components/json-ld";
-import { Button } from "@/components/ui/button";
-import { World } from "@/components/world";
 import { bookListSchema, faqSchema, graph } from "@/lib/schema";
+import { site } from "@/content/site";
 
-// Главная — полёт по планетам книг (spec §5). Весь текст — в HTML; 3D-мир (World) — прогрессивное улучшение поверх.
-// data-p — точка маршрута камеры для секции (src/world/main.js). Без мира показываются постеры планет (public/world/).
-const P = { kuv: "0.16", dub: "0.39", fan: "0.61", asf: "0.88" } as const;
+// Главная — полёт по пространству (spec v0.3). Секций как блоков страницы нет: всё содержание — таблички в мире и попапы.
+// .world-sec[data-p] задают только длину скролла и точки маршрута камеры (src/world/main.js).
+// [data-anchor] — табличка, которую мир держит над своим 3D-объектом (src/world/heroes.js, home.js).
+// Без 3D-мира (нет WebGL, «уменьшить движение») те же элементы — обычная страница с постерами планет.
+const P: Record<Planet, string> = { kuv: "0.16", dub: "0.39", fan: "0.61", asf: "0.88" };
 const SMELLS = [["well", "Колодец Леденец"], ["river", "Речка"], ["milk", "Парное молоко"], ["stone", "Древнее море"]];
 const DUB = [["oak", "Дуб"], ["nut", "Орех"], ["sponge", "Мочало"]];
-const RAIL = [["planet-kuv", "Кувшинки"], ["planet-dub", "Дуб, орех и мочало"], ["planet-fan", "Цветные запахи лета"], ["planet-asf", "Асфодель"], ["shelf", "Все книги"]];
+const RAIL = [["planet-kuv", "Кувшинки"], ["planet-dub", "Дуб, орех и мочало"], ["planet-fan", "Цветные запахи лета"], ["planet-asf", "Асфодель"], ["home", "Дом автора"]];
+// Какие герои книги стоят в мире: [индекс в books.characters, якорь фигурки]
+const HEROES: Record<Planet, [number, string][]> = {
+  kuv: [[0, "kuv.hero.0"], [2, "kuv.hero.1"], [1, "kuv.hero.2"]],
+  dub: [[0, "dub.hero.0"], [1, "dub.hero.1"], [2, "dub.hero.2"], [3, "dub.hero.3"]],
+  fan: [[0, "fan.hero.0"], [1, "fan.hero.1"], [2, "fan.hero.2"], [3, "fan.hero.3"]],
+  asf: [[0, "asf.hero.0"], [1, "asf.hero.1"], [2, "asf.hero.2"]],
+};
+const shortName = (n: string) => n.replace(/\s*\(.*\)/, "");
+
+const reviews = [
+  { text: "[…] И главный из них — научиться мечтать так, чтобы все сбывалось. И никогда не упускать самое важное слово: любовь.", who: "Ася Кравченко, детский писатель", book: "Дуб, орех и мочало", src: "отзыв для издания, сокращено" },
+  ...books.find((b) => b.slug === "dub-orekh-i-mochalo")!.reviews.slice(1, 2).map((r) => ({ text: r.text, who: `${r.author}${r.role ? `, ${r.role}` : ""}`, book: "Дуб, орех и мочало", src: r.source })),
+  ...books.find((b) => b.slug === "tsvetnye-zapakhi-leta")!.reviews.map((r) => ({ text: r.text, who: r.author, book: "Цветные запахи лета и немного фанданго", src: r.source })),
+  ...books.find((b) => b.slug === "day-mne-ruku")!.reviews.slice(0, 1).map((r) => ({ text: r.text, who: r.author, book: "Дай мне руку", src: r.source })),
+];
 
 export default function Home() {
   return (
     <div className="world-page">
       <JsonLd data={graph(bookListSchema(books), faqSchema(home.faq))} />
-      <World />
       <p className="world-verse" id="verse" role="status" aria-live="polite" />
       <p className="world-bubble" id="bubble" role="status" aria-live="polite" />
 
-      {/* Маршрут по планетам: видим только с 3D-миром; активная точка — из src/world/main.js */}
-      <nav className="world-rail" aria-label="Планеты книг">
+      <nav className="world-rail widget-rail" aria-label="Маршрут по миру">
         <ol>
           {RAIL.map(([id, label]) => (
             <li key={id}><a href={`#${id}`} data-rail={id}><span className="sr-only">{label}</span><i aria-hidden /><b aria-hidden>{label}</b></a></li>
@@ -37,15 +48,15 @@ export default function Home() {
 
       <div className="world-flow">
         <section className="world-sec intro" data-p="0">
-          <div className="world-card">
+          <div className="widget card intro-card">
             <p className="world-eyebrow">{home.eyebrow}</p>
-            <h1 className="text-[34px] leading-[1.05] sm:text-5xl">{home.h1}</h1>
+            <h1 className="text-[32px] leading-[1.05] sm:text-5xl">{home.h1}</h1>
             <p className="mt-3 text-[16px] leading-relaxed sm:text-[17px]">{home.answer}</p>
             <p className="world-only world-hint mt-3 text-sm text-muted-foreground">{home.hint} <span aria-hidden>↓</span></p>
           </div>
         </section>
 
-        {planetBooks.map((b, i) => {
+        {planetBooks.map((b) => {
           const k = b.planet!;
           const t = home.planets[k];
           return (
@@ -53,57 +64,58 @@ export default function Home() {
               <div className="world-spacer" aria-hidden />
               {k === "asf" && (
                 <>
-                  <section className="world-sec right" data-p="0.72">
-                    <div className="world-card">
+                  <section className="world-sec gate" data-p="0.72">
+                    <div className="widget card gate-card">
                       <p className="world-eyebrow">16+</p>
                       <h2 className="text-2xl sm:text-3xl">{home.gate.title}</h2>
                       <p className="mt-3">{home.gate.text}</p>
-                      <Button asChild variant="outline" className="mt-4 rounded-full"><a href="#shelf" id="skip16">{home.gate.skip}</a></Button>
+                      <a href="#home" id="skip16" className="mt-4 inline-flex rounded-full border px-4 py-2 text-[15px] font-medium">{home.gate.skip}</a>
                     </div>
                   </section>
                   <div className="world-spacer" aria-hidden />
                 </>
               )}
-              <section className={`world-sec ${i % 2 ? "right" : ""}`} data-p={P[k]} data-planet={k} id={`planet-${k}`}>
-                <div className="world-card planet" style={{ ["--planet" as string]: t.color }}>
-                  <img className="world-poster" src={`/world/${k}.webp`} srcSet={`/world/${k}.webp 720w, /world/${k}@2x.webp 1440w`} sizes="(min-width: 640px) 560px, 100vw" alt={`Планета книги «${b.title}»`} loading="lazy" width={720} height={450} />
-                  <div className="flex gap-4">
-                    <div className="card-cover w-14 shrink-0 sm:w-16"><BookCover b={b} /></div>
-                    <div className="min-w-0">
-                      {b.awards && <p className="mb-1.5 inline-block rounded-md bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">Финал премии им. В. П. Крапивина</p>}
-                      <p className="world-eyebrow">{b.genre} · {b.age}</p>
-                      <h2 className="text-[22px] leading-tight sm:text-3xl">{b.title}</h2>
-                    </div>
-                  </div>
-                  <p className="card-quote mt-3 font-serif italic">«{t.quote}»</p>
-                  <p className="card-lead mt-2">{t.lead}</p>
+              <section className="world-sec planet" data-p={P[k]} data-planet={k} id={`planet-${k}`} aria-labelledby={`sign-${k}`} style={{ ["--planet" as string]: t.color }}>
+                <img className="world-poster" src={`/world/${k}.webp`} srcSet={`/world/${k}.webp 720w, /world/${k}@2x.webp 1440w`} sizes="(min-width: 640px) 560px, 100vw" alt={`Планета книги «${b.title}»`} loading="lazy" width={720} height={450} />
 
-                  {k === "kuv" && (
-                    <div className="world-only mt-3">
-                      <button type="button" className="world-chip" id="lilyBtn" aria-pressed="false">{t.action}</button>
-                      <p className="verse-inline mt-2 font-serif italic" id="verseInline" aria-hidden />
-                    </div>
-                  )}
-                  {k === "dub" && (
-                    <div className="world-only mt-3">
-                      <p className="mb-2 text-sm">{t.action}</p>
-                      <div className="chips">{DUB.map(([id, l]) => <button key={id} type="button" className="world-chip" data-dub={id}>{l}</button>)}</div>
-                    </div>
-                  )}
-                  {k === "fan" && (
-                    <div className="world-only mt-3">
-                      <p className="mb-2 text-sm">{t.action}</p>
-                      <div className="chips">{SMELLS.map(([id, l]) => <button key={id} type="button" className="world-chip" data-smell={id}>{l}</button>)}</div>
-                    </div>
-                  )}
-                  {k === "asf" && (
-                    <p className="world-only mt-3"><span className="font-serif text-2xl" id="steps">0</span> / 300 {t.action}</p>
-                  )}
+                {/* Табличка книги на столбике в мире → попап книги */}
+                <Link href={`/books/${b.slug}/`} className="sign" data-anchor={`${k}.sign`} data-near="34" id={`sign-${k}`}>
+                  <small>{b.genre} · {b.age.split(" · ")[0]}</small>
+                  <b>{b.title}</b>
+                  {b.awards && <i className="sign-award">Финал премии им. В. П. Крапивина</i>}
+                  <em>«{t.quote}»</em>
+                  <span>Открыть книгу <span aria-hidden>→</span></span>
+                </Link>
+                <p className="sign-lead">{t.lead}</p>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button asChild className="rounded-full"><Link href={`/books/${b.slug}/`}>О книге</Link></Button>
-                    <Button asChild variant="outline" className="rounded-full"><Link href={`/books/${b.slug}/#buy`}>{t.buy}</Link></Button>
-                  </div>
+                {/* Имена героев над фигурками → попап героя */}
+                <ul className="hero-tags" aria-label={`Герои книги «${b.title}»`}>
+                  {HEROES[k].map(([i, a]) => {
+                    const c = b.characters[i];
+                    return (
+                      <li key={a}>
+                        <button type="button" className="tag" data-anchor={a} data-near="20" popoverTarget={`hero-${a}`}>{shortName(c.name)}</button>
+                        <div popover="auto" id={`hero-${a}`} className="pop pop-hero" style={{ ["--planet" as string]: t.color }}>
+                          <p className="world-eyebrow">Герой книги «{b.title}»</p>
+                          <h3 className="text-2xl">{c.name}</h3>
+                          <p className="mt-2 text-[17px] leading-relaxed">{c.name.split(" (")[0]} — {c.text}</p>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <Link href={`/books/${b.slug}/`} className="rounded-full bg-primary px-4 py-2 text-[15px] text-primary-foreground">О книге</Link>
+                            <button type="button" popoverTarget={`hero-${a}`} popoverTargetAction="hide" className="rounded-full border px-4 py-2 text-[15px]">Закрыть</button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {/* Виджет действий планеты: виден, когда камера у этой планеты */}
+                <div className="dock widget" data-for={k}>
+                  {k === "kuv" && (<><button type="button" className="world-chip" id="lilyBtn" aria-pressed="false">{t.action}</button><p className="verse-inline font-serif italic" id="verseInline" aria-hidden /></>)}
+                  {k === "dub" && (<><span className="dock-label">{t.action}</span><div className="chips">{DUB.map(([id, l]) => <button key={id} type="button" className="world-chip" data-dub={id}>{l}</button>)}</div></>)}
+                  {k === "fan" && (<><span className="dock-label">{t.action}</span><div className="chips">{SMELLS.map(([id, l]) => <button key={id} type="button" className="world-chip" data-smell={id}>{l}</button>)}</div></>)}
+                  {k === "asf" && <p><span className="font-serif text-2xl" id="steps">0</span> / 300 {t.action}</p>}
+                  <Link href={`/books/${b.slug}/#buy`} className="world-chip buy">{t.buy}</Link>
                 </div>
               </section>
             </div>
@@ -111,58 +123,48 @@ export default function Home() {
         })}
 
         <div className="world-spacer" aria-hidden />
-        <section className="world-sec" data-p="1" id="shelf">
-          <div className="world-card wide">
-            <p className="world-eyebrow">Книжная полка</p>
-            <h2 className="text-3xl">{home.shelf.title}</h2>
-            <p className="mt-2">{home.shelf.text}</p>
-            <div className="shelf mt-5 grid grid-cols-3 gap-4 sm:grid-cols-6">{books.map((b) => <BookCard key={b.slug} b={b} />)}</div>
+        <section className="world-sec home" data-p="1" id="home" aria-labelledby="home-title">
+          <img className="world-poster" src="/world/home.webp" srcSet="/world/home.webp 720w, /world/home@2x.webp 1440w" sizes="(min-width: 640px) 560px, 100vw" alt="Остров «Дом автора»: стол с лампой, полка с книгами, почтовый ящик" loading="lazy" width={720} height={450} />
+          <div className="widget card home-card">
+            <p className="world-eyebrow">Дом автора</p>
+            <h2 id="home-title" className="text-2xl sm:text-3xl">Евгения Перлова</h2>
+            <p className="mt-2 text-[15px] leading-relaxed sm:text-[16px]">{home.aboutShort}</p>
           </div>
-        </section>
-      </div>
+          <ul className="home-signs">
+            <li><Link href="/books/" className="sign small" data-anchor="home.books" data-near="30"><small>Полка</small><b>Все книги</b><span>{books.length} книг <span aria-hidden>→</span></span></Link></li>
+            <li><Link href="/about/" className="sign small" data-anchor="home.about" data-near="30"><small>Стол автора</small><b>Об авторе</b><span>Биография, премии, встречи <span aria-hidden>→</span></span></Link></li>
+            <li><button type="button" popoverTarget="reviews" className="sign small" data-anchor="home.reviews" data-near="30"><small>Доска</small><b>Отзывы</b><span>Что говорят о книгах</span></button></li>
+            <li><button type="button" popoverTarget="faq" className="sign small" data-anchor="home.faq" data-near="30"><small>Фонарь</small><b>Вопросы</b><span>С какой книги начать</span></button></li>
+            <li><Link href="/contacts/" className="sign small" data-anchor="home.contacts" data-near="30"><small>Почтовый ящик</small><b>Написать автору</b><span>Встречи, издание, переводы <span aria-hidden>→</span></span></Link></li>
+          </ul>
 
-      <div className="relative z-10 bg-background">
-        <Section>
-          <Container className="max-w-3xl">
-            <h2 className="text-3xl tracking-tight">Об авторе</h2>
-            <p className="mt-4 text-[17px] leading-relaxed">{home.aboutShort}</p>
-            <figure className="mt-6 border-l-2 border-accent pl-4">
-              <blockquote className="font-serif text-[19px] italic">«{home.aboutQuote.text}»</blockquote>
-              <figcaption className="mt-1 text-sm text-muted-foreground">{home.aboutQuote.source}</figcaption>
-            </figure>
-            <ul className="mt-6 space-y-2">
-              {about.awards.slice(0, 3).map((a) => <li key={a.text} className="flex gap-3"><span className="w-12 shrink-0 tabular-nums text-muted-foreground">{a.year}</span><span>{a.text}</span></li>)}
-            </ul>
-            <Button asChild variant="outline" className="mt-6 rounded-full"><Link href="/about/">Подробнее об авторе</Link></Button>
-          </Container>
-        </Section>
-
-        <Section className="border-t bg-card">
-          <Container className="max-w-3xl">
-            <h2 className="mb-6 text-3xl tracking-tight">Что говорят о книгах</h2>
+          <div popover="auto" id="reviews" className="pop pop-wide">
+            <button type="button" popoverTarget="reviews" popoverTargetAction="hide" className="pop-close" aria-label="Закрыть">×</button>
+            <h2 className="mb-5 text-3xl tracking-tight">Что говорят о книгах</h2>
             <div className="space-y-7">
-              {[
-                { text: "[…] И главный из них — научиться мечтать так, чтобы все сбывалось. И никогда не упускать самое важное слово: любовь.", who: "Ася Кравченко, детский писатель", book: "Дуб, орех и мочало", src: "отзыв для издания, сокращено" },
-                ...books.find((b) => b.slug === "dub-orekh-i-mochalo")!.reviews.slice(1, 2).map((r) => ({ text: r.text, who: `${r.author}${r.role ? `, ${r.role}` : ""}`, book: "Дуб, орех и мочало", src: r.source })),
-                ...books.find((b) => b.slug === "tsvetnye-zapakhi-leta")!.reviews.map((r) => ({ text: r.text, who: r.author, book: "Цветные запахи лета и немного фанданго", src: r.source })),
-                ...books.find((b) => b.slug === "day-mne-ruku")!.reviews.slice(0, 1).map((r) => ({ text: r.text, who: r.author, book: "Дай мне руку", src: r.source })),
-              ].map((r) => (
+              {reviews.map((r) => (
                 <figure key={r.who}>
                   <blockquote className="font-serif text-[18px] italic leading-relaxed">«{r.text}»</blockquote>
                   <figcaption className="mt-2 text-sm text-muted-foreground">— {r.who}, о книге «{r.book}» · {r.src}</figcaption>
                 </figure>
               ))}
             </div>
-          </Container>
-        </Section>
+            <figure className="mt-8 border-l-2 border-accent pl-4">
+              <blockquote className="font-serif text-[18px] italic">«{home.aboutQuote.text}»</blockquote>
+              <figcaption className="mt-1 text-sm text-muted-foreground">{home.aboutQuote.source}</figcaption>
+            </figure>
+          </div>
 
-        <Section className="border-t">
-          <Container className="max-w-3xl">
-            <h2 className="mb-6 text-3xl tracking-tight">Частые вопросы</h2>
+          <div popover="auto" id="faq" className="pop pop-wide">
+            <button type="button" popoverTarget="faq" popoverTargetAction="hide" className="pop-close" aria-label="Закрыть">×</button>
+            <h2 className="mb-5 text-3xl tracking-tight">Частые вопросы</h2>
             <FaqList items={home.faq} />
-          </Container>
-        </Section>
-        <Cta />
+            <ul className="mt-6 space-y-2 text-[15px]">
+              {about.awards.slice(0, 3).map((a) => <li key={a.text} className="flex gap-3"><span className="w-12 shrink-0 tabular-nums text-muted-foreground">{a.year}</span><span>{a.text}</span></li>)}
+            </ul>
+            <p className="mt-6 text-[15px]">Написать автору: <a href={`mailto:${site.contacts.email}`} className="underline underline-offset-4" data-goal="contact_email">{site.contacts.email}</a></p>
+          </div>
+        </section>
       </div>
     </div>
   );

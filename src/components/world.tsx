@@ -1,10 +1,15 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { planetBooks } from "@/content/books";
 
-// 3D-мир планет (Three.js) — прогрессивное улучшение главной. Не запускается без WebGL и при prefers-reduced-motion:
-// тогда страница — обычные секции с обложками, весь текст в HTML. Код сцены грузится отдельным чанком после первого экрана.
+// 3D-пространство на весь сайт (spec v0.3) — прогрессивное улучшение. Живёт в layout и не пересоздаётся между страницами.
+// Не запускается без WebGL и при prefers-reduced-motion: тогда виджеты и панели — обычная страница, весь текст в HTML.
 export function World() {
   const ref = useRef<HTMLCanvasElement>(null);
+  const router = useRouter();
+  const nav = useRef(router.push);
+  nav.current = router.push;
   useEffect(() => {
     const root = document.documentElement;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -12,10 +17,11 @@ export function World() {
     if (!(probe.getContext("webgl2") || probe.getContext("webgl"))) return;
     let stop: (() => void) | undefined;
     let alive = true;
+    const slugs = Object.fromEntries(planetBooks.map((b) => [b.planet, b.slug]));
     import("@/world/main.js").then(({ startWorld }) => {
       if (!alive || !ref.current) return;
       root.classList.add("has-world");
-      stop = startWorld(ref.current);
+      stop = startWorld(ref.current, { nav: (href: string) => nav.current(href), slugs });
     });
     return () => { alive = false; stop?.(); root.classList.remove("has-world"); };
   }, []);

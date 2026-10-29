@@ -84,7 +84,7 @@ export function buildAsfodel(scene) {
 
   const stepsLit = { v: 0 };
   return {
-    root, island,
+    root, island, city,
     hit: [],
     focus: new THREE.Vector3(0, 4, 0),
     stepsLit,

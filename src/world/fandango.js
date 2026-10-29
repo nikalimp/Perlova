@@ -117,7 +117,7 @@ export function buildFandango() {
 
   let fanOpen = 0.15;
   return {
-    root, island,
+    root, island, robin,
     hit: [well, river, stone, jug, ...blades],
     focus: new THREE.Vector3(0.4, 0.6, -0.8),
     pick(obj) { if (blades.includes(obj)) return 'fan'; while (obj && !obj.userData.id) obj = obj.parent; return obj ? obj.userData.id : null; },

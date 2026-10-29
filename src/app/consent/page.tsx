@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Panel } from "@/components/panel";
 import { site } from "@/content/site";
 import { Container, Section } from "@/components/container";
 
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 export default function Consent() {
   const email = site.legal.privacyEmail || site.contacts.email;
   return (
+    <Panel view="overview" back="/">
     <Section className="pt-12">
       <Container className="max-w-3xl">
         <h1 className="text-3xl font-semibold tracking-tight">Согласие на обработку персональных данных</h1>
@@ -32,5 +34,6 @@ export default function Consent() {
         </div>
       </Container>
     </Section>
+    </Panel>
   );
 }

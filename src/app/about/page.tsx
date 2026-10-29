@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Panel } from "@/components/panel";
 import { about, aboutVoice } from "@/content/about";
 import { books } from "@/content/books";
 import { site } from "@/content/site";
@@ -16,12 +17,13 @@ export const metadata: Metadata = {
 
 export default function About() {
   return (
+    <Panel view="desk" back="/#home">
     <>
       <JsonLd data={graph({ "@type": "ProfilePage", url: `${site.url}/about/`, mainEntity: { "@id": personId } })} />
       <Section className="pt-12">
-        <Container className="grid gap-10 md:grid-cols-[minmax(0,1fr)_220px]">
+        <Container className="grid gap-10 @2xl:grid-cols-[minmax(0,1fr)_220px]">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-[44px]">{about.h1}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-balance @md:text-[44px]">{about.h1}</h1>
             <p className="mt-5 text-lg leading-relaxed">{about.answer}</p>
             <p className="mt-4 font-serif text-[18px] italic text-muted-foreground">«{aboutVoice.self.text}» — {aboutVoice.self.source}</p>
             <div className="mt-6 space-y-4 text-[17px] leading-relaxed">{about.bio.map((p) => <p key={p.slice(0, 20)}>{p}</p>)}</div>
@@ -31,8 +33,8 @@ export default function About() {
             </figure>
           </div>
           {/* Фото автора на сайте нет (decisions.md). Иллюстрация «стол автора» в палитре мира, без человека (рекомендация Д5) */}
-          <div className="order-first md:order-none">
-            <img src="/brand/desk.svg" alt="Иллюстрация: стол автора — книги, кувшинка, тетрадь и перо" width={220} height={260} className="mx-auto w-48 md:w-full" />
+          <div className="order-first @2xl:order-none">
+            <img src="/brand/desk.svg" alt="Иллюстрация: стол автора — книги, кувшинка, тетрадь и перо" width={220} height={260} className="mx-auto w-48 @2xl:w-full" />
           </div>
         </Container>
       </Section>
@@ -53,7 +55,7 @@ export default function About() {
       <Section className="border-t">
         <Container>
           <h2 className="mb-6 text-2xl font-semibold tracking-tight">Книги</h2>
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">{books.map((b) => <BookCard key={b.slug} b={b} />)}</div>
+          <div className="grid grid-cols-2 gap-6 @md:grid-cols-3 @3xl:grid-cols-6">{books.map((b) => <BookCard key={b.slug} b={b} />)}</div>
           <h3 className="mt-10 text-lg font-semibold">Другие книги и публикации</h3>
           <ul className="mt-3 list-disc space-y-1.5 pl-5 text-muted-foreground">{about.otherBooks.map((x) => <li key={x}>{x}</li>)}</ul>
           <h3 className="mt-8 text-lg font-semibold">Переводы</h3>
@@ -67,12 +69,13 @@ export default function About() {
           <p className="mb-6 text-muted-foreground">{about.invite}</p>
           <ul className="divide-y border-y">
             {about.meetings.map((m) => (
-              <li key={m.text} className="grid gap-1 py-3 sm:grid-cols-[9rem_1fr]"><span className="text-sm text-muted-foreground">{m.date}</span><span>{m.text}</span></li>
+              <li key={m.text} className="grid gap-1 py-3 @md:grid-cols-[9rem_1fr]"><span className="text-sm text-muted-foreground">{m.date}</span><span>{m.text}</span></li>
             ))}
           </ul>
         </Container>
       </Section>
       <Cta title="Пригласить Евгению Перлову на встречу" />
     </>
+    </Panel>
   );
 }

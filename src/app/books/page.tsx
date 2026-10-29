@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Panel } from "@/components/panel";
 import { books } from "@/content/books";
 import { home } from "@/content/home";
 import { Container, Section } from "@/components/container";
@@ -23,11 +24,12 @@ const groups = [
 
 export default function Books() {
   return (
+    <Panel view="shelf" back="/#home">
     <>
       <JsonLd data={graph(bookListSchema(books))} />
       <Section className="pt-12">
         <Container>
-          <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">Книги Евгении Перловой</h1>
+          <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance @md:text-5xl">Книги Евгении Перловой</h1>
           <p className="mt-5 max-w-3xl text-lg leading-relaxed text-muted-foreground">{home.shelf.text}</p>
           <p className="mt-3 max-w-3xl text-muted-foreground">
             Книги разделены по возрасту читателя. На странице каждой книги — о чём она, кто её герои, отзывы, издания с ISBN и ссылки на магазины, где её можно купить, прочитать или послушать. Две повести о школьнице Ясе связаны одной героиней, а «Дай мне руку» продолжает историю Есении из повести «Танцы, огурцы и большие мечты». Если вы выбираете книгу в подарок, начните с возраста ребёнка: для малышей — стихи, для младших школьников — повести о Ясе, для подростков — дилогия о Есении. Роман «Асфодель» — для читателей от 16 лет.
@@ -37,7 +39,7 @@ export default function Books() {
               <section key={g.title}>
                 <h2 className="text-2xl font-semibold tracking-tight">{g.title}</h2>
                 <p className="mt-2 max-w-2xl text-muted-foreground">{g.text}</p>
-                <div className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="mt-6 grid grid-cols-2 gap-6 @md:grid-cols-3 @3xl:grid-cols-4">
                   {g.slugs.map((s) => <BookCard key={s} b={books.find((b) => b.slug === s)!} />)}
                 </div>
               </section>
@@ -47,5 +49,6 @@ export default function Books() {
       </Section>
       <Cta />
     </>
+    </Panel>
   );
 }

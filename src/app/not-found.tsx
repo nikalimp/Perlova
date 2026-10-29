@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Panel } from "@/components/panel";
 import Link from "next/link";
 import { Container, Section } from "@/components/container";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
+    <Panel view="overview" back="/">
     <Section>
       <Container className="max-w-xl text-center">
         <p className="font-mono text-sm text-muted-foreground">404</p>
@@ -18,5 +20,6 @@ export default function NotFound() {
         <Button asChild className="mt-6"><Link href="/">На главную</Link></Button>
       </Container>
     </Section>
+    </Panel>
   );
 }

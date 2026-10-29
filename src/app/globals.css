@@ -88,49 +88,127 @@
 }
 @keyframes fade-in { from { opacity: 0; translate: 0 -4px; } to { opacity: 1; translate: none; } }
 
-/* ── Мир планет на главной (src/components/world.tsx). Без .has-world — обычная страница с постерами планет. ── */
-.world-canvas, .world-only, .world-spacer, .world-rail, .verse-inline { display: none; }
-.world-flow { padding: 2rem 0; }
-.world-sec { padding: 1rem 1rem; display: flex; justify-content: center; }
-.world-card { width: 100%; max-width: 560px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px 24px; }
-.world-card.wide { max-width: 980px; }
-.world-card.planet { border-left: 4px solid var(--planet); }
-.world-poster { display: block; width: calc(100% + 48px); max-width: none; margin: -22px -24px 18px -20px; border-radius: 16px 16px 0 0; aspect-ratio: 16 / 10; object-fit: cover; background: var(--secondary); }
+/* ── Сайт-пространство (spec v0.3). Без .has-world — обычная страница: виджеты в потоке, панели — карточки, постеры планет. ── */
+.world-canvas, .world-only, .world-spacer, .world-rail, .verse-inline, .world-verse, .world-bubble { display: none; }
 .world-eyebrow { font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 4px; }
-.card-quote { color: var(--planet); font-size: 17px; }
-.world-chip { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 7px 13px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--foreground); white-space: nowrap; }
+.world-chip { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 7px 13px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--foreground); white-space: nowrap; display: inline-flex; align-items: center; }
 .world-chip:hover { border-color: var(--primary); color: var(--primary); }
-.world-chip:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+.world-chip:focus-visible, .sign:focus-visible, .tag:focus-visible, .widget a:focus-visible, .widget button:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.world-verse, .world-bubble { display: none; }
 
-.has-world .world-page { background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%) fixed; }
-.has-world body { background: var(--sky-bottom); }
+/* виджеты: стекло, общие для обоих режимов */
+.widget { background: color-mix(in oklch, var(--card) 86%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 10px 30px oklch(0.2 0.03 300 / 14%); color: var(--foreground); }
+.widget.pill { border-radius: 999px; }
+.widget.card { border-radius: 22px; padding: 20px 22px; max-width: 480px; }
+
+/* верх: знак и меню */
+.topbar { position: fixed; z-index: 20; inset: 14px 14px auto 14px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+.topbar > * { pointer-events: auto; }
+.topbar .brand { display: inline-flex; align-items: center; gap: 10px; padding: 7px 16px 7px 8px; margin-right: auto; }
+.menu-desktop { display: none; align-items: center; gap: 4px; padding: 5px; font-size: 15px; }
+.menu-desktop a { padding: 7px 13px; border-radius: 999px; color: var(--muted-foreground); }
+.menu-desktop a:hover { color: var(--foreground); background: var(--secondary); }
+.menu-desktop .tg { display: inline-flex; align-items: center; gap: 6px; background: var(--primary); color: var(--primary-foreground); }
+.menu-desktop .tg:hover { background: var(--primary); color: var(--primary-foreground); opacity: .9; }
+.menu-button { display: inline-flex; width: 46px; height: 46px; align-items: center; justify-content: center; }
+@media (min-width: 900px) { .menu-desktop { display: flex; } .menu-button { display: none; } }
+
+/* низ: копирайт и политика */
+.foot { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted-foreground); padding: 8px 14px; border-radius: 14px; margin: 24px 14px 14px; justify-content: space-between; }
+.foot a { text-decoration: underline; text-underline-offset: 3px; }
+
+/* попапы (нативный popover) */
+.pop { margin: auto; width: min(560px, calc(100vw - 28px)); max-height: min(80dvh, 760px); overflow: auto; border: 0; border-radius: 24px; padding: 26px 26px 24px; background: var(--card); color: var(--foreground); box-shadow: 0 30px 80px oklch(0.2 0.04 300 / 35%); }
+.pop::backdrop { background: oklch(0.2 0.04 300 / 30%); backdrop-filter: blur(2px); }
+.pop-hero { border-top: 6px solid var(--planet); width: min(440px, calc(100vw - 28px)); }
+.pop-wide { width: min(720px, calc(100vw - 28px)); }
+.pop-menu { margin: 70px 14px auto auto; width: min(340px, calc(100vw - 28px)); }
+.pop-close { position: sticky; top: 0; float: right; margin: -8px -8px 0 8px; width: 40px; height: 40px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; line-height: 1; background: var(--secondary); }
+@media (prefers-reduced-motion: no-preference) { .pop:popover-open { animation: pop-in .28s cubic-bezier(.2,.8,.2,1); } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+
+/* таблички */
+.sign { display: inline-flex; flex-direction: column; gap: 2px; text-align: left; background: var(--card); color: var(--foreground); border-radius: 14px; padding: 12px 16px 11px; border-left: 5px solid var(--planet, var(--primary)); box-shadow: 0 8px 24px oklch(0.2 0.03 300 / 18%); max-width: 300px; }
+.sign small { font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted-foreground); }
+.sign b { font-family: var(--font-serif); font-size: 20px; line-height: 1.15; font-weight: 600; }
+.sign em { font-family: var(--font-serif); font-size: 14.5px; color: var(--planet, var(--primary)); }
+.sign > span { font-size: 13.5px; font-weight: 500; color: var(--primary); margin-top: 4px; }
+.sign.small b { font-size: 17px; }
+.sign-award { font-style: normal; font-size: 12px; font-weight: 500; color: var(--accent-foreground); background: var(--accent); border-radius: 999px; padding: 2px 8px; align-self: flex-start; margin: 2px 0; }
+.sign:hover { transform: translateY(-2px); }
+.tag { display: inline-flex; align-items: center; gap: 6px; background: var(--card); color: var(--foreground); border-radius: 999px; padding: 6px 12px 6px 9px; font-size: 13.5px; font-weight: 500; box-shadow: 0 6px 16px oklch(0.2 0.03 300 / 18%); cursor: pointer; }
+.tag::before { content: ""; width: 8px; height: 8px; border-radius: 999px; background: var(--planet, var(--primary)); }
+
+/* обычный режим (без 3D): секции-карточки по порядку */
+.world-flow { padding: 84px 14px 0; display: grid; gap: 18px; justify-items: center; }
+.world-sec { width: 100%; max-width: 640px; }
+.world-sec.planet, .world-sec.home { background: var(--card); border-radius: 22px; padding: 0 0 20px; overflow: hidden; }
+.world-sec.planet > :not(.world-poster), .world-sec.home > * { margin-inline: 20px; }
+.world-poster { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--secondary); margin-bottom: 14px; }
+.world-sec .sign { box-shadow: none; max-width: none; padding-left: 14px; }
+.sign-lead { margin-top: 10px; }
+.hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.dock { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; box-shadow: none; background: none; backdrop-filter: none; }
+html:not(.has-world) .dock > :not(.buy) { display: none; }
+.dock-label { font-size: 14px; color: var(--muted-foreground); }
+.dock-award { width: 100%; font-size: 12.5px; font-weight: 500; color: var(--accent-foreground); }
+.home-signs { display: grid; gap: 10px; margin-top: 14px; }
+.home-signs .sign { width: 100%; }
+.home-card { box-shadow: none; padding: 20px 0 0; background: none; backdrop-filter: none; }
+.widget.card.intro-card, .widget.card.gate-card { max-width: 640px; }
+
+/* панель страницы */
+.panel { position: relative; container-type: inline-size; max-width: 920px; margin: 84px auto 0; background: var(--card); border-radius: 24px; padding: 26px 22px 8px; }
+.panel-close { position: sticky; top: 0; z-index: 2; float: right; margin: -10px -6px 0 10px; width: 42px; height: 42px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: var(--secondary); color: var(--foreground); }
+.panel-close:hover { background: var(--border); }
+.panel-body > section, .panel-body section.py-16 { padding-block: 24px; }
+.panel-body > section:first-of-type, .panel-body > div > section:first-of-type { padding-top: 4px; }
+.panel-body .mx-auto { max-width: none; padding-inline: 0; }
+.panel-body .bg-card { background: transparent; }
+.panel-body h1 { font-size: clamp(28px, 6.4cqw, 44px); }
+
+/* ── режим 3D-мира ── */
+.has-world, .has-world body { background: var(--sky-bottom, #fbeee2); }
+.has-world body { background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%) fixed; }
 .has-world .world-canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: 0; }
-.has-world .world-poster { display: none; }
+.has-world .world-poster, .has-world .sign-lead { display: none; }
 .has-world .world-only { display: block; }
 .has-world .world-spacer { display: block; min-height: 85vh; }
-.has-world .world-flow { position: relative; z-index: 1; pointer-events: none; padding: 0; }
-.has-world .world-sec { min-height: 100vh; align-items: flex-end; justify-content: flex-start; padding: 0 16px 7vh; }
-.has-world .world-sec.right { justify-content: flex-end; }
-.has-world .world-card { pointer-events: auto; max-width: 460px; background: color-mix(in oklch, var(--card) 86%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 10px 30px oklch(0.2 0.03 300 / 16%); border-color: transparent; transition: background .6s, color .6s; }
-.has-world .world-card.planet { border-left: 4px solid var(--planet); }
-.has-world .world-card.wide { max-width: 980px; }
-.has-world.night .world-card { background: color-mix(in oklch, var(--night) 82%, transparent); color: var(--night-foreground); }
-.has-world.night .world-card .world-eyebrow, .has-world.night .world-card .text-muted-foreground { color: var(--night-muted); }
-.has-world.night .card-quote { color: var(--night-foreground); }
-.has-world .world-verse, .has-world .world-bubble { display: block; position: fixed; z-index: 2; pointer-events: none; font-family: var(--font-serif); font-style: italic; font-size: 18px;
+.has-world .world-flow { display: block; padding: 0; pointer-events: none; }
+.has-world .world-sec { max-width: none; min-height: 100vh; display: flex; align-items: flex-end; padding: 0 16px 7vh; background: none; border-radius: 0; overflow: visible; }
+.has-world .world-sec > * { margin-inline: 0; }
+.has-world .world-sec .widget.card { pointer-events: auto; }
+.has-world .world-sec.gate { justify-content: flex-end; }
+
+/* таблички и имена над 3D: позицию ставит src/world/main.js */
+.has-world [data-anchor] { position: fixed; left: 0; top: 0; z-index: 5; margin: 0; pointer-events: auto; visibility: hidden; opacity: 0; transition: opacity .35s, visibility 0s linear .35s; will-change: transform; }
+.has-world [data-anchor].on { visibility: visible; opacity: 1; transition: opacity .35s; }
+.has-world .sign { max-width: 260px; }
+.has-world .sign::after { content: ""; position: absolute; left: 50%; bottom: -12px; width: 2px; height: 12px; background: color-mix(in oklch, var(--card) 80%, transparent); }
+.has-world .world-sec .sign { box-shadow: 0 8px 24px oklch(0.2 0.03 300 / 18%); }
+.has-world .tag::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 10px; height: 10px; background: var(--card); transform: translateX(-50%) rotate(45deg); z-index: -1; }
+.has-world .hero-tags, .has-world .home-signs { margin: 0; }
+
+/* виджет действий планеты: виден, когда камера у неё */
+.has-world .dock { position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 12px); z-index: 6; margin: 0; padding: 8px 10px 8px 16px; border-radius: 999px; max-width: calc(100vw - 24px); flex-wrap: nowrap; visibility: hidden; opacity: 0; transition: opacity .35s, transform .35s, visibility 0s linear .35s;
+  background: color-mix(in oklch, var(--card) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 10px 30px oklch(0.2 0.03 300 / 16%); pointer-events: auto; }
+html[data-zone="kuv"] .dock[data-for="kuv"], html[data-zone="dub"] .dock[data-for="dub"], html[data-zone="fan"] .dock[data-for="fan"], html[data-zone="asf"] .dock[data-for="asf"] { visibility: visible; opacity: 1; transform: translate(-50%, 0); transition: opacity .35s, transform .35s; }
+.has-world .dock-award { width: auto; white-space: nowrap; background: var(--accent); padding: 4px 10px; border-radius: 999px; }
+.has-world .dock .buy { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
+.has-world .verse-inline { display: none; }
+
+/* стих, пузыри-подписи */
+.has-world .world-verse, .has-world .world-bubble { display: block; position: fixed; z-index: 6; pointer-events: none; font-family: var(--font-serif); font-style: italic; font-size: 18px;
   color: var(--foreground); background: oklch(0.99 0.01 70 / 94%); padding: 10px 16px; border-radius: 14px; opacity: 0; transition: opacity .3s; box-shadow: 0 6px 20px oklch(0 0 0 / 12%); }
 .has-world .world-verse { left: 50%; top: 84px; transform: translateX(-50%); max-width: 360px; text-align: center; }
 .has-world .world-bubble { left: 0; top: 0; max-width: 280px; text-align: center; }
 .has-world .world-verse.on, .has-world .world-bubble.on { opacity: 1; }
-.has-world header { background: color-mix(in oklch, var(--background) 70%, transparent); }
 .world-hint span { display: inline-block; animation: hint 1.6s ease-in-out infinite; }
 @keyframes hint { 50% { transform: translateY(4px); } }
 
-/* Маршрут по планетам справа */
-.has-world .world-rail { display: block; position: fixed; right: 18px; top: 50%; transform: translateY(-50%); z-index: 3; }
-.world-rail ol { display: flex; flex-direction: column; gap: 14px; list-style: none; margin: 0; padding: 0; }
+/* маршрут справа */
+.has-world .world-rail { display: block; position: fixed; right: 18px; top: 50%; transform: translateY(-50%); z-index: 6; pointer-events: auto; }
+.world-rail ol { display: flex; flex-direction: column; gap: 14px; list-style: none; margin: 0; padding: 10px 8px; }
 .world-rail a { display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: var(--foreground); text-decoration: none; min-height: 24px; }
 .world-rail i { width: 10px; height: 10px; border-radius: 999px; border: 2px solid currentColor; opacity: .55; transition: transform .2s, opacity .2s, background .2s; order: 2; }
 .world-rail b { font-weight: 500; font-size: 13px; opacity: 0; transform: translateX(6px); transition: opacity .2s, transform .2s; background: color-mix(in oklch, var(--card) 88%, transparent); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
@@ -138,22 +216,50 @@
 .world-rail a[aria-current="step"] i { background: currentColor; opacity: 1; transform: scale(1.25); }
 .world-rail a:focus-visible { outline: none; }
 .world-rail a:focus-visible i { outline: 3px solid var(--ring); outline-offset: 2px; }
+
+/* ночь: виджеты темнеют, таблички остаются светлыми — их легко читать */
+.has-world.night .world-sec .widget.card, .has-world.night .dock, .has-world.night .topbar .widget { background: color-mix(in oklch, var(--night) 80%, transparent); color: var(--night-foreground); }
+.has-world.night .world-sec .widget.card .world-eyebrow, .has-world.night .world-sec .widget.card .text-muted-foreground, .has-world.night .dock-label, .has-world.night .menu-desktop a { color: var(--night-muted); }
+.has-world.night .menu-desktop .tg { color: var(--primary-foreground); }
+.has-world.night .topbar .brand img { filter: brightness(1.6); }
 .has-world.night .world-rail a { color: var(--night-foreground); }
 .has-world.night .world-rail b { background: color-mix(in oklch, var(--night) 88%, transparent); }
+.has-world.night .foot { background: color-mix(in oklch, var(--night) 70%, transparent); color: var(--night-muted); }
 
-/* Телефон: компактные карточки — мир виден, кнопки на экране */
+/* панель страницы поверх мира: справа на компьютере, нижний лист на телефоне */
+.has-world .panel { position: fixed; z-index: 8; top: 76px; right: 16px; bottom: 16px; width: min(580px, 46vw); margin: 0; overflow: auto; overscroll-behavior: contain;
+  background: color-mix(in oklch, var(--card) 94%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 24px 70px oklch(0.2 0.04 300 / 28%); }
+@media (prefers-reduced-motion: no-preference) { .has-world .panel { animation: panel-in .5s cubic-bezier(.2,.8,.2,1); } }
+@keyframes panel-in { from { opacity: 0; transform: translateX(24px); } }
+.has-world .foot { position: fixed; right: 14px; bottom: 14px; margin: 0; z-index: 4; font-size: 11px; padding: 5px 12px; gap: 2px 10px; max-width: 300px; justify-content: flex-end; text-align: right; }
+.has-world .dock .chips { flex-wrap: nowrap; }
+.has-world .sign.small > span { display: none; }
+.has-world .sign.small { padding: 9px 14px 8px; max-width: 190px; }
+.has-world .home-card { max-width: 400px; } .has-world .home-card p:last-child { font-size: 14px; }
+.has-world main:has(.panel) ~ .foot { display: none; }
+.has-world main:has(.panel) { min-height: 100vh; }
+
+@media (max-width: 899px) {
+  .has-world .panel { left: 0; right: 0; bottom: 0; top: auto; width: auto; height: 66dvh; border-radius: 24px 24px 0 0; padding-top: 18px; }
+  @keyframes panel-in { from { opacity: 0; transform: translateY(40px); } }
+  .has-world .foot { display: none; }
+}
 @media (max-width: 640px) {
-  .has-world .world-sec { padding: 0 12px 2.5vh; }
-  .has-world .world-card { padding: 14px 16px; max-width: none; }
-  .has-world .world-card .card-cover, .has-world .world-card .card-lead { display: none; }
-  .has-world .world-card .card-quote { font-size: 15px; margin-top: 6px; }
-  .has-world .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -16px; padding-right: 16px; }
-  .has-world .world-verse { display: none; }
-  .has-world .verse-inline { display: block; min-height: 0; font-size: 15px; }
-  .has-world .world-rail { right: 8px; }
-  .has-world .world-rail b { display: none; }
+  .topbar { inset: 10px 10px auto 10px; }
+  .topbar .brand span { font-size: 16px; }
+  .has-world .world-sec { padding: 0 10px 12vh; }
+  .has-world .widget.card { padding: 16px 18px; }
   .has-world .world-sec.intro h1 { font-size: 30px; }
   .has-world .world-sec.intro p:not(.world-eyebrow) { font-size: 15px; }
-  .has-world .shelf { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  .world-poster { margin: -22px -24px 16px -20px; }
+  .has-world .sign { max-width: 210px; padding: 9px 12px 8px; }
+  .has-world .sign b { font-size: 16.5px; }
+  .has-world .sign em { display: none; }
+  .has-world .tag { font-size: 12.5px; padding: 5px 10px 5px 8px; }
+  .has-world .dock { bottom: 10px; padding: 6px 8px 6px 12px; overflow-x: auto; scrollbar-width: none; }
+  .has-world .dock-label, .has-world .dock-award { display: none; }
+  .has-world .world-verse { top: 70px; font-size: 15px; max-width: calc(100vw - 40px); }
+  .has-world .world-rail { right: 4px; }
+  .has-world .home-card p:last-child { display: none; }
+  .has-world .sign-award { display: none; }
+  .has-world .world-rail b { display: none; }
 }
