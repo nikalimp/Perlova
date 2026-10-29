@@ -1,0 +1,5 @@
+# REG.RU (Apache за nginx). Главная — наш index.html, а не заглушка хостинга (index.php / default.html).
+# Редирект на HTTPS здесь не пишем: он включён галочкой в ISPmanager (иначе бесконечный цикл — «Хостинги — что проверено»).
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+Options -Indexes
