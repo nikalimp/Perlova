@@ -99,7 +99,7 @@ export function buildKuvshinki() {
 
   let target = 0;
   return {
-    root, island, hit: [hero, heroPad],
+    root, island, whale, hit: [hero, heroPad],
     focus: new THREE.Vector3(0.5, 0.2, -0.3),
     toggle(force) { target = typeof force === 'number' ? force : (target > 0.5 ? 0 : 1); return target > 0.5; },
     get open() { return target > 0.5; },

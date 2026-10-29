@@ -8,6 +8,7 @@ import { Cta } from "@/components/cta";
 import { FaqList } from "@/components/faq";
 import { BookCard, BookCover, BuyLinks } from "@/components/book-parts";
 import { JsonLd } from "@/components/json-ld";
+import { Panel } from "@/components/panel";
 import { bookSchema, breadcrumbs, faqSchema, graph } from "@/lib/schema";
 
 export function generateStaticParams() {
@@ -33,16 +34,16 @@ export default async function BookPage({ params }: { params: Promise<{ slug: str
   const related = b.related.map(bookBySlug).filter((x): x is NonNullable<typeof x> => Boolean(x));
 
   return (
-    <>
+    <Panel view={b.planet ?? "shelf"} back={b.planet ? `/#planet-${b.planet}` : "/#home"}>
       <JsonLd data={graph(bookSchema(b), breadcrumbs([{ name: "Главная", path: "/" }, { name: "Книги", path: "/books/" }, { name: b.title, path }]), b.faq.length > 0 && faqSchema(b.faq))} />
 
       <Section className="pt-10">
         <Container>
           <Crumbs items={[{ name: "Главная", path: "/" }, { name: "Книги", path: "/books/" }, { name: b.title }]} />
-          <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_300px] md:gap-14">
+          <div className="grid gap-10 @2xl:grid-cols-[minmax(0,1fr)_300px] @2xl:gap-14">
             <div>
               <p className="text-sm uppercase tracking-wider text-muted-foreground">{b.genre} · {b.age}</p>
-              <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-tight text-balance sm:text-[44px]">{b.h1}</h1>
+              <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-tight text-balance @md:text-[44px]">{b.h1}</h1>
               {b.awards && <p className="mt-4 inline-block rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground">{b.awards[0]}</p>}
               <p className="mt-5 text-lg leading-relaxed">{b.answer}</p>
               {b.warning && <p className="mt-4 rounded-xl border border-accent/40 bg-card p-4 text-[15px]">{b.warning}</p>}
@@ -51,7 +52,7 @@ export default async function BookPage({ params }: { params: Promise<{ slug: str
                 <BuyLinks b={b} />
               </div>
             </div>
-            <div className="order-first max-w-[260px] md:order-none md:max-w-none">
+            <div className="order-first max-w-[260px] @2xl:order-none @2xl:max-w-none">
               <BookCover b={b} priority />
             </div>
           </div>
@@ -69,7 +70,7 @@ export default async function BookPage({ params }: { params: Promise<{ slug: str
 
       <Section className="border-t">
         <Container className="max-w-3xl">
-          <div className="grid gap-10 sm:grid-cols-2">
+          <div className="grid gap-10 @md:grid-cols-2">
             <div>
               <h2 className="mb-4 text-2xl font-semibold tracking-tight">Герои</h2>
               <ul className="space-y-3">{b.characters.map((c) => <li key={c.name}><b className="font-semibold">{c.name}</b> — {c.text}</li>)}</ul>
@@ -138,12 +139,12 @@ export default async function BookPage({ params }: { params: Promise<{ slug: str
         <Section className="border-t">
           <Container>
             <Eyebrow>Ещё книги</Eyebrow>
-            <div className="mt-4 grid grid-cols-2 gap-6 sm:grid-cols-4">{related.map((r) => <BookCard key={r.slug} b={r} />)}</div>
+            <div className="mt-4 grid grid-cols-2 gap-6 @md:grid-cols-4">{related.map((r) => <BookCard key={r.slug} b={r} />)}</div>
           </Container>
         </Section>
       )}
 
       <Cta />
-    </>
+    </Panel>
   );
 }

@@ -7,21 +7,21 @@ const { chromium } = createRequire(import.meta.url)("playwright");
 import fs from "node:fs";
 
 const BASE = process.argv[2] || "http://localhost:3011";
-const SHOTS = [["kuv", "0.16"], ["dub", "0.39"], ["fan", "0.61"], ["asf", "0.88"]];
+const SHOTS = [["kuv", "0.16"], ["dub", "0.39"], ["fan", "0.61"], ["asf", "0.88"], ["home", "1"]];
 const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
 
 async function open(w, h) {
   const p = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   await p.goto(BASE + "/");
   await p.waitForFunction(() => document.documentElement.classList.contains("has-world"), null, { timeout: 30000 });
-  await p.addStyleTag({ content: "header,.world-flow,.world-rail,.world-verse,.world-bubble,#cookie-banner{visibility:hidden!important} .world-page>div:last-child{display:none}" });
+  await p.addStyleTag({ content: ".topbar,.foot,.world-flow,.world-rail,.world-verse,.world-bubble,#cookie-banner,[data-anchor],.dock{visibility:hidden!important}" });
   return p;
 }
 async function at(p, ps) {
   await p.evaluate((ps) => { const s = document.querySelector(`[data-p="${ps}"]`); scrollTo(0, Math.max(0, s.offsetTop + s.offsetHeight - innerHeight)); }, ps);
   await p.waitForTimeout(500);
   await p.evaluate(() => window.__snap && window.__snap());
-  await p.waitForTimeout(4000);
+  await p.waitForTimeout(9000);
 }
 // PNG → WebP средствами браузера, без лишних зависимостей
 async function toWebp(p, png, w, out) {
@@ -39,7 +39,7 @@ fs.mkdirSync("public/world", { recursive: true });
 const p = await open(1440, 900);
 for (const [k, ps] of SHOTS) {
   await at(p, ps);
-  const png = await p.screenshot();
+  const png = await p.screenshot({ timeout: 180000 });
   await toWebp(p, png, 1440, `public/world/${k}@2x.webp`);
   await toWebp(p, png, 720, `public/world/${k}.webp`);
   console.log("постер", k);
@@ -58,6 +58,6 @@ await og.evaluate(() => {
   document.body.appendChild(d);
 });
 await og.waitForTimeout(500);
-await og.screenshot({ path: "public/og.png" });
+await og.screenshot({ path: "public/og.png", timeout: 180000 });
 console.log("og");
 await browser.close();

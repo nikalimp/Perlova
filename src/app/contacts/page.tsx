@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Panel } from "@/components/panel";
 import { site } from "@/content/site";
 import { about } from "@/content/about";
 import { Container, Section } from "@/components/container";
@@ -22,17 +23,18 @@ export default function Contacts() {
     { label: "Город", value: c.city },
   ];
   return (
+    <Panel view="home" back="/#home">
     <>
       <JsonLd data={graph({ "@type": "ContactPage", url: `${site.url}/contacts/`, about: { "@id": personId } })} />
       <Section className="pt-12">
         <Container className="max-w-3xl">
-          <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-[44px]">Связаться с Евгенией Перловой</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-balance @md:text-[44px]">Связаться с Евгенией Перловой</h1>
           <p className="mt-5 text-lg leading-relaxed">
             Пишите на {c.email} или в Telegram @evgeniaperolva — по приглашениям на встречи, вопросам издания книг и переводов. Новости о книгах и встречах — в Telegram-канале @perlovaevgenia.
           </p>
           <dl className="mt-8 divide-y border-y">
             {rows.map((r) => (
-              <div key={r.label} className="grid gap-1 py-4 sm:grid-cols-[10rem_1fr]">
+              <div key={r.label} className="grid gap-1 py-4 @md:grid-cols-[10rem_1fr]">
                 <dt className="text-muted-foreground">{r.label}</dt>
                 <dd>{r.href ? <a href={r.href} className="underline underline-offset-4" data-goal={r.goal} {...(r.href.startsWith("http") && { target: "_blank", rel: "noopener" })}>{r.value}</a> : r.value}</dd>
               </div>
@@ -55,5 +57,6 @@ export default function Contacts() {
         </Container>
       </Section>
     </>
+    </Panel>
   );
 }

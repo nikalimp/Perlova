@@ -90,7 +90,7 @@ export function buildDub() {
   let spin = 0, spinT = 0;
   const reply = { oak: '«Вот тебе молочный суп!»', nut: '«Одевайся в рыбий мех!»', sponge: '«Начинаем всё сначала!»' };
   return {
-    root, island,
+    root, island, kotya,
     hit: items.map((x) => x[3]),
     focus: new THREE.Vector3(1.2, 0.6, -1.4),
     pick(obj) { while (obj && !obj.userData.id) obj = obj.parent; return obj ? obj.userData.id : null; },

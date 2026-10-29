@@ -4,8 +4,8 @@ import "@fontsource-variable/lora/wght.css";
 import "@fontsource-variable/lora/wght-italic.css";
 import "./globals.css";
 import { site } from "@/content/site";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { TopBar, FootWidget } from "@/components/widgets";
+import { World } from "@/components/world";
 import { CookieBanner } from "@/components/cookie-banner";
 import { JsonLd } from "@/components/json-ld";
 import { graph, personSchema, websiteSchema } from "@/lib/schema";
@@ -38,9 +38,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <noscript><div><img src={`https://mc.yandex.ru/watch/${site.metrikaId}`} style={{ position: "absolute", left: "-9999px" }} alt="" /></div></noscript>
         )}
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2">К содержанию</a>
-        <Header />
-        <main id="main" className="flex-1">{children}</main>
-        <Footer />
+        <World />
+        <TopBar />
+        <main id="main" className="relative z-[1] flex-1">{children}</main>
+        <FootWidget />
         <CookieBanner />
       </body>
     </html>
