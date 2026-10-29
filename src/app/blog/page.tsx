@@ -7,8 +7,8 @@ import { JsonLd } from "@/components/json-ld";
 import { graph } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "TODO(клиент): Блог — статьи и ответы на вопросы",
-  description: "TODO(клиент): о чём блог и кому он полезен, 120⁠–⁠160 символов.",
+  title: "Раздел выключен на сайте автора (blog)",
+  description: "Раздел выключен флагом site.features.blog.",
   alternates: { canonical: "/blog/" },
   ...(!site.features.blog && { robots: { index: false, follow: true } }),
 };

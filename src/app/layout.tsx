@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import "@fontsource-variable/inter/wght.css"; // шрифт локально: заменить на шрифт бренда из specs/03-design.md
+import "@fontsource-variable/golos-text/wght.css";
+import "@fontsource-variable/lora/wght.css";
+import "@fontsource-variable/lora/wght-italic.css";
 import "./globals.css";
 import { site } from "@/content/site";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { CookieBanner } from "@/components/cookie-banner";
 import { JsonLd } from "@/components/json-ld";
-import { graph, orgSchema, personSchema, websiteSchema } from "@/lib/schema";
+import { graph, personSchema, websiteSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -14,6 +16,7 @@ export const metadata: Metadata = {
   description: site.description,
   alternates: { canonical: "/" },
   openGraph: { type: "website", locale: site.locale, siteName: site.name, title: site.title, description: site.description, url: site.url, images: ["/og.png"] },
+  icons: { icon: "/icon.svg" },
   robots: { index: true, follow: true },
 };
 
@@ -28,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {site.darkTheme && <script dangerouslySetInnerHTML={{ __html: themeScript }} />}
         {site.metrikaId > 0 && <script dangerouslySetInnerHTML={{ __html: metrikaScript(site.metrikaId) }} />}
-        <JsonLd data={graph(websiteSchema, orgSchema, personSchema)} />
+        <JsonLd data={graph(websiteSchema, personSchema)} />
       </head>
       <body className="flex min-h-screen flex-col">
         {site.metrikaId > 0 && (

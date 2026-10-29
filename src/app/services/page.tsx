@@ -8,9 +8,10 @@ import { JsonLd } from "@/components/json-ld";
 import { graph } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "TODO(клиент): Услуги и цены",
-  description: "TODO(клиент): описание списка услуг с ценами и городом, 120⁠–⁠160 символов.",
+  title: "Раздел выключен на сайте автора (services)",
+  description: "Раздел выключен флагом site.features.services.",
   alternates: { canonical: "/services/" },
+  ...(!site.features.services && { robots: { index: false, follow: true } }),
 };
 
 export default function Services() {

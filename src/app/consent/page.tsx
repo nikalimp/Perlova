@@ -13,13 +13,13 @@ export const metadata: Metadata = {
 // не внутри политики и не одной галочкой с офертой. Эта страница — отдельный документ, на неё ведёт чекбокс
 // <ConsentCheckbox /> у каждой формы. Перед запуском — сверить цели и состав данных с реальными формами клиента.
 export default function Consent() {
-  const email = site.legal.privacyEmail || site.contacts.email || "TODO(клиент): почта для запросов по ПДн";
+  const email = site.legal.privacyEmail || site.contacts.email;
   return (
     <Section className="pt-12">
       <Container className="max-w-3xl">
         <h1 className="text-3xl font-semibold tracking-tight">Согласие на обработку персональных данных</h1>
         <div className="prose-site mt-8">
-          <p>Отправляя форму на сайте {site.url}, я свободно, своей волей и в своём интересе даю согласие {site.legalName} (ИНН {site.legal.inn}, ОГРН {site.legal.ogrn}) на обработку моих персональных данных на условиях ниже.</p>
+          <p>Отправляя форму на сайте {site.url}, я свободно, своей волей и в своём интересе даю согласие {site.legal.operator} на обработку моих персональных данных на условиях ниже.</p>
           <h2>Какие данные</h2>
           <p>Имя, номер телефона, адрес электронной почты и сведения, которые я укажу в сообщении.</p>
           <h2>Цель</h2>

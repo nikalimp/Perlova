@@ -13,7 +13,8 @@ import { JsonLd } from "@/components/json-ld";
 import { breadcrumbs, faqSchema, graph, serviceSchema } from "@/lib/schema";
 
 export function generateStaticParams() {
-  return services.map((s) => ({ slug: s.slug }));
+  // Статический экспорт требует хотя бы один путь — заглушка отдаёт 404
+  return services.length ? services.map((s) => ({ slug: s.slug })) : [{ slug: "_" }];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
