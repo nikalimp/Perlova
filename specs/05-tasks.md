@@ -53,4 +53,4 @@
 - 2026-10-29 · T12–T13 · мир из `world-src` → `src/world/`, компонент `World` (ленивый импорт, нет WebGL / reduced motion — обычная страница); чанк сцены 177 КБ gzip; главная — карточки планет, порог 16+, полка, об авторе, отзывы, FAQ.
 - 2026-10-29 · T17 · llms.txt, llms-full.txt, sitemap (10 URL), robots; geo-check 8.4/10; `npm run check` — пройдена.
 - [~] T14: постеры планет для режима без WebGL ещё не сделаны — сейчас фолбэк = секции с обложками. T15: pixelRatio 1.25 и тени 1024 на телефоне; нужна проверка на реальном телефоне. T16: `data-goal` на ссылках есть, отправка `reachGoal` — вместе с Метрикой. T18: OG у книг — обложка; у главной — `og.png` стартера, заменить.
-
+- 2026-10-29 · T23 · сайт выложен по FTP; корень `/` отдавал заглушку REG.RU (её файл раньше `index.html` в DirectoryIndex) — `public/.htaccess`: `DirectoryIndex index.html`, `ErrorDocument 404`.
