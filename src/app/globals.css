@@ -1,49 +1,40 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
 
 /* Токены бренда — из specs/03-design.md §3. Дефолт: нейтральная тема shadcn + синий акцент.
    Серая тема без настройки под бренд = недоделка (стандарт §6). */
+/* Токены — specs/03-design.md §3 (OKLCH, контраст WCAG AA проверен). Тёмной темы нет: ночью меняются только карточки (.night). */
 :root {
-  --radius: 0.5rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.205 0 0);
-  --card: oklch(0.99 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.52 0 0);
-  --accent: oklch(0.965 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --border: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --brand: oklch(0.55 0.15 255);
-  --brand-bg: oklch(0.97 0.02 255);
-}
-
-.dark {
-  --background: oklch(0.17 0 0);
-  --foreground: oklch(0.93 0 0);
-  --card: oklch(0.2 0 0);
-  --primary: oklch(0.93 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.26 0 0);
-  --secondary-foreground: oklch(0.93 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.66 0 0);
-  --accent: oklch(0.255 0 0);
-  --accent-foreground: oklch(0.93 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --ring: oklch(0.556 0 0);
-  --brand: oklch(0.74 0.12 255);
-  --brand-bg: oklch(0.74 0.12 255 / 12%);
+  --radius: 1.25rem;
+  --background: oklch(0.968 0.015 70.9);
+  --foreground: oklch(0.312 0.043 318.0);
+  --card: oklch(0.987 0.010 72.7);
+  --primary: oklch(0.493 0.075 187.7);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.933 0.020 58.1);
+  --secondary-foreground: oklch(0.312 0.043 318.0);
+  --muted: oklch(0.933 0.020 58.1);
+  --muted-foreground: oklch(0.493 0.039 324.6);
+  --accent: oklch(0.544 0.187 344.5);
+  --accent-foreground: oklch(1 0 0);
+  --border: oklch(0.898 0.025 49.7);
+  --ring: oklch(0.590 0.141 260.7);
+  --brand: oklch(0.493 0.075 187.7);
+  --brand-bg: oklch(0.933 0.020 58.1);
+  --night: oklch(0.226 0.053 281.2);
+  --night-foreground: oklch(0.957 0.015 277.9);
+  --night-muted: oklch(0.809 0.042 274.7);
+  --sky-top: oklch(0.82 0.08 0);
+  --sky-bottom: oklch(0.96 0.02 70);
 }
 
 @theme inline {
-  --font-sans: "Inter Variable", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-sans: "Golos Text Variable", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-serif: "Lora Variable", Georgia, "Times New Roman", serif;
+  --color-night: var(--night);
+  --color-night-foreground: var(--night-foreground);
+  --color-night-muted: var(--night-muted);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -68,8 +59,9 @@
 @layer base {
   * { @apply border-border outline-ring/50; }
   html { scroll-behavior: smooth; }
-  body { @apply bg-background text-foreground; font-size: 15px; -webkit-font-smoothing: antialiased; }
-  ::selection { background: oklch(0.55 0.15 255 / 20%); }
+  body { @apply bg-background text-foreground; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: var(--font-serif); font-weight: 600; letter-spacing: -0.01em; }
+  ::selection { background: oklch(0.544 0.187 344.5 / 20%); }
 }
 
 /* Типографика статей */
@@ -95,3 +87,37 @@
   details[open] > :not(summary) { animation: fade-in .25s ease-out; }
 }
 @keyframes fade-in { from { opacity: 0; translate: 0 -4px; } to { opacity: 1; translate: none; } }
+
+/* ── Мир планет на главной (src/components/world.tsx). Без .has-world — обычная страница. ── */
+.world-canvas { display: none; }
+.world-only { display: none; }
+.world-spacer { display: none; }
+.world-flow { padding: 2rem 0; }
+.world-sec { padding: 1rem 1rem; display: flex; justify-content: center; }
+.world-card { width: 100%; max-width: 560px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px 24px; }
+.world-card.wide { max-width: 980px; }
+.world-eyebrow { font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-foreground); margin-bottom: 4px; }
+.world-chip { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 7px 13px; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--foreground); }
+.world-chip:hover { border-color: var(--primary); color: var(--primary); }
+.world-chip:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+.world-verse, .world-bubble { display: none; }
+
+.has-world .world-page { background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%) fixed; }
+.has-world body { background: var(--sky-bottom); }
+.has-world .world-canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; transition: opacity .2s; }
+.has-world .world-only { display: block; }
+.has-world .world-spacer { display: block; min-height: 85vh; }
+.has-world .world-flow { position: relative; z-index: 1; pointer-events: none; padding: 0; }
+.has-world .world-sec { min-height: 100vh; align-items: flex-end; justify-content: flex-start; padding: 0 16px 7vh; }
+.has-world .world-sec.right { justify-content: flex-end; }
+.has-world .world-card { pointer-events: auto; max-width: 460px; background: color-mix(in oklch, var(--card) 86%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 10px 30px oklch(0.2 0.03 300 / 16%); border-color: transparent; transition: background .6s, color .6s; }
+.has-world .world-card.wide { max-width: 980px; }
+.has-world.night .world-card { background: color-mix(in oklch, var(--night) 82%, transparent); color: var(--night-foreground); }
+.has-world.night .world-card .world-eyebrow, .has-world.night .world-card .text-muted-foreground { color: var(--night-muted); }
+.has-world .world-verse, .has-world .world-bubble { display: block; position: fixed; z-index: 2; pointer-events: none; font-family: var(--font-serif); font-style: italic; font-size: 18px;
+  color: var(--foreground); background: oklch(0.99 0.01 70 / 94%); padding: 10px 16px; border-radius: 14px; opacity: 0; transition: opacity .3s; box-shadow: 0 6px 20px oklch(0 0 0 / 12%); }
+.has-world .world-verse { left: 50%; top: 84px; transform: translateX(-50%); max-width: 360px; text-align: center; }
+.has-world .world-bubble { left: 0; top: 0; max-width: 280px; text-align: center; }
+.has-world .world-verse.on, .has-world .world-bubble.on { opacity: 1; }
+.has-world header { background: color-mix(in oklch, var(--background) 70%, transparent); }
+@media (max-width: 640px) { .has-world .world-sec { padding-bottom: 3vh; } .has-world .world-card { padding: 16px 18px; } .has-world .world-verse { top: 72px; } }

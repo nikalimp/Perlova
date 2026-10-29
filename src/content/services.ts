@@ -21,7 +21,10 @@ export type Service = {
   related: string[]; // slug связанных услуг
 };
 
-export const services: Service[] = [
+import { site } from "./site";
+
+// Флаг site.features.services выключен — список пуст, страницы услуг не собираются в sitemap и llms.txt
+const all: Service[] = [
   {
     slug: "example-service",
     title: "TODO(клиент): Название услуги",
@@ -40,5 +43,7 @@ export const services: Service[] = [
     related: [],
   },
 ];
+
+export const services: Service[] = site.features.services ? all : [];
 
 export const serviceBySlug = (slug: string) => services.find((s) => s.slug === slug);

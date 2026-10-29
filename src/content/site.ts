@@ -1,84 +1,77 @@
-// Единый источник правды о компании. Заполняется по specs/00-brief.md и specs/02-spec.md.
-// Всё, что помечено TODO(клиент), должно быть заменено фактами до запуска: `npm run check` не пропустит TODO.
+// Единый источник правды об авторе. Заполнен по specs/00-brief.md, specs/02-spec.md и specs/source/research.md.
 
-export type OrgType =
-  | "Organization"
-  | "LocalBusiness"
-  | "ProfessionalService"
-  | "Dentist"
-  | "MedicalClinic"
-  | "LegalService"
-  | "EducationalOrganization"
-  | "HomeAndConstructionBusiness"
-  | "Store";
+export type OrgType = "Person";
 
 export const site = {
-  url: "https://example.ru", // TODO(клиент): боевой домен без слеша на конце
-  name: "TODO(клиент): Бренд",
-  legalName: "TODO(клиент): ООО «Название»",
-  // Тип организации в Schema.org — самый точный из подходящих: https://schema.org/LocalBusiness#subtypes
-  orgType: "LocalBusiness" as OrgType,
-  title: "TODO(клиент): Бренд — услуга в городе", // title главной, до 60 символов
-  description: "TODO(клиент): описание компании для поиска и нейросетей, 120⁠–⁠160 символов, с фактами: что, где, для кого, цена или срок.",
-  // Одна фраза о компании для llms.txt и футера
-  tagline: "TODO(клиент): что делаем и для кого",
+  url: "https://perlova.nikalimp.ru",
+  name: "Евгения Перлова",
+  legalName: "Евгения Перлова",
+  orgType: "Person" as OrgType,
+  title: "Евгения Перлова — детский писатель, поэт и переводчик",
+  description:
+    "Книги Евгении Перловой: стихи для малышей, повести о школьнице Ясе и роман 16+. Финал премии им. Крапивина. Где купить книги и как связаться с автором.",
+  tagline: "Писатель, поэт и переводчик из Екатеринбурга. Книги для детей, подростков и взрослых.",
   lang: "ru",
   locale: "ru_RU",
-  foundingYear: 2015, // TODO(клиент)
   areaServed: ["RU"],
 
   contacts: {
-    phone: "", // формат +7XXXXXXXXXX; пусто — блок не показывается
+    phone: "", // телефон на сайте не показываем (decisions.md)
     phoneDisplay: "",
-    email: "",
-    telegram: "", // https://t.me/…
-    whatsapp: "", // https://wa.me/7XXXXXXXXXX
-    address: {
-      street: "",
-      city: "",
-      region: "",
-      postalCode: "",
-      country: "RU",
-    },
-    geo: null as null | { lat: number; lng: number },
-    hours: "", // для людей: «Пн–Пт 9:00–19:00»
-    openingHours: [] as { days: string[]; opens: string; closes: string }[], // для Schema: days — Monday…Sunday
+    email: "ifigenia@list.ru",
+    telegram: "https://t.me/evgeniaperolva",
+    channel: "https://t.me/perlovaevgenia",
+    city: "Екатеринбург",
   },
 
-  // Главное целевое действие — на него ведут все CTA
-  cta: {
-    label: "TODO(клиент): Записаться",
-    href: "https://t.me/TODO", // TODO(клиент): ссылка на мессенджер, форму или tel:
-  },
+  // Главное целевое действие на страницах книг — «Где купить»; общее — написать автору
+  cta: { label: "Написать автору", href: "/contacts/" },
 
-  // Реквизиты для футера и политики ПДн (152-ФЗ)
   legal: {
-    inn: "TODO(клиент)",
-    ogrn: "TODO(клиент)",
-    privacyEmail: "", // почта для запросов по персональным данным; пусто — берётся contacts.email
+    privacyEmail: "ifigenia@list.ru",
+    operator: "Евгения Перлова", // имя оператора в политике ПДн (решение Ника, по умолчанию — публичное имя)
   },
 
-  // Профили бренда на внешних площадках: одинаковые название, адрес и телефон везде
-  sameAs: [] as string[],
-  socials: [] as { label: string; href: string }[], // Instagram и Facebook — с «*» в label
-  metaNote: "", // «*Meta Platforms Inc. признана экстремистской и запрещена в РФ» — если есть ссылки на Instagram/Facebook
+  // Профили автора на внешних площадках (Schema.org sameAs)
+  sameAs: [
+    "https://www.labirint.ru/authors/138065/",
+    "https://www.litres.ru/author/evgeniya-perlova-33895207/",
+    "https://www.litres.ru/author/evgeniya-perlova-32626054/",
+    "https://books.yandex.ru/authors/evgeniya-perlova-U7SU9DZr",
+    "https://prodetlit.ru/index.php/Перлова_Евгения_Михайловна",
+    "https://author.today/u/ifigenia",
+    "https://t.me/perlovaevgenia",
+  ],
+  socials: [
+    { label: "Telegram-канал", href: "https://t.me/perlovaevgenia" },
+    { label: "Лабиринт", href: "https://www.labirint.ru/authors/138065/" },
+    { label: "Литрес", href: "https://www.litres.ru/author/evgeniya-perlova-33895207/" },
+    { label: "Яндекс Книги", href: "https://books.yandex.ru/authors/evgeniya-perlova-U7SU9DZr" },
+  ],
+  metaNote: "",
 
-  // Лицо компании — основатель или эксперт. null, если не нужен
-  person: null as null | { name: string; jobTitle: string; description: string; sameAs: string[] },
+  person: {
+    name: "Евгения Перлова",
+    jobTitle: "Писатель, поэт, переводчик",
+    description:
+      "Детский писатель, поэт и переводчик из Екатеринбурга. Автор стихов для малышей «Кувшинки», повестей «Дуб, орех и мочало» и «Цветные запахи лета и немного фанданго», романа «Асфодель, цветок забвения».",
+  },
 
-  metrikaId: 0, // номер счётчика Яндекс Метрики; 0 — счётчик не подключается (на боевом домене npm run check этого не пропустит)
-  darkTheme: true, // переключатель темы в шапке
+  metrikaId: 0, // счётчик подключается после запуска на боевом домене (решение Ника 2026-10-29)
+  darkTheme: false,
 
-  // Функции включаются и выключаются флагами, а не удалением кода (стандарт §1.9):
-  // снятый с сайта блок остаётся в репозитории и возвращается одной строкой.
+  // Функции включаются и выключаются флагами, а не удалением кода (стандарт §1.9)
   features: {
-    blog: true, // блог: пункт меню, /blog/, статьи в sitemap и llms.txt
+    blog: false, // контент-завода нет
+    services: false, // услуг нет — сайт автора
+    forms: false, // форм нет, ПДн не собираем
+    legalRequisites: false, // реквизитов нет — личный сайт, ничего не продаём (spec §9)
+    metrikaPending: true, // Метрика — после запуска (spec §9); npm run check предупреждает, но не блокирует
   },
 };
 
 export const nav = [
-  { href: "/services/", label: "Услуги" },
-  ...(site.features.blog ? [{ href: "/blog/", label: "Блог" }] : []),
-  { href: "/about/", label: "О компании" },
+  { href: "/books/", label: "Книги" },
+  { href: "/about/", label: "Об авторе" },
   { href: "/contacts/", label: "Контакты" },
 ];

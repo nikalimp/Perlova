@@ -11,14 +11,14 @@ export const metadata: Metadata = {
 // Типовая политика по 152-ФЗ, собирается из реквизитов в src/content/site.ts.
 // Перед запуском — сверить с фактической обработкой данных клиента (формы, CRM, рассылки) и, если есть, с его юристом.
 export default function Privacy() {
-  const email = site.legal.privacyEmail || site.contacts.email || "TODO(клиент): почта для запросов по ПДн";
+  const email = site.legal.privacyEmail || site.contacts.email;
   return (
     <Section className="pt-12">
       <Container className="max-w-3xl">
         <h1 className="text-3xl font-semibold tracking-tight">Политика обработки персональных данных</h1>
         <div className="prose-site mt-8">
           <h2>1. Кто обрабатывает данные</h2>
-          <p>Оператор персональных данных — {site.legalName}, ИНН {site.legal.inn}, ОГРН {site.legal.ogrn} (далее — Оператор). Политика действует для сайта {site.url} и составлена по Федеральному закону № 152-ФЗ «О персональных данных».</p>
+          <p>Оператор персональных данных — {site.legal.operator} (далее — Оператор). Политика действует для сайта {site.url} и составлена по Федеральному закону № 152-ФЗ «О персональных данных».</p>
           <h2>2. Какие данные мы получаем</h2>
           <ul>
             <li>Данные, которые вы указываете сами: имя, телефон, адрес электронной почты, текст сообщения.</li>

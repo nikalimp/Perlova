@@ -122,7 +122,11 @@ if (!fs.readdirSync(path.join(ROOT, "public")).some((f) => /^[a-f0-9]{32}\.txt$/
 
 // 4. Блокирующее перед выкладкой
 const home = fs.readFileSync(path.join(OUT, "index.html"), "utf8");
+const siteSrc = [path.join(ROOT, "src", "content", "site.ts"), path.join(ROOT, "src", "lib", "site.ts")].filter((f) => fs.existsSync(f)).map((f) => fs.readFileSync(f, "utf8")).join("\n");
+const flagOff = (name) => new RegExp(`${name}:\\s*false`).test(siteSrc);
+const flagOn = (name) => new RegExp(`${name}:\\s*true`).test(siteSrc);
 if (/mc\.yandex\.ru\/metrika/.test(home)) ok("Яндекс Метрика подключена");
+else if (flagOn("metrikaPending")) console.log("  ⚠ Метрика отложена флагом site.features.metrikaPending (исключение spec §9) — подключить сразу после запуска");
 else prodFail("Яндекс Метрика не подключена — номер счётчика в site.metrikaId (src/content/site.ts)");
 for (const page of ["privacy-policy", "consent"]) {
   if (!fs.existsSync(path.join(OUT, page, "index.html"))) prodFail(`Нет страницы /${page}/ — политика и отдельное согласие на обработку ПДн обязательны (стандарт §8)`);
@@ -150,6 +154,8 @@ const npd = /status:\s*"[^"]*(самозанят|НПД|профессионал
 if (npd) {
   if (!/^\d{12}$/.test(inn) || !innOk(inn)) fail(`Самозанятый: ИНН ${inn || "пусто"} — нужен ИНН физлица из 12 цифр с верной контрольной суммой`);
   else ok(`Реквизиты: самозанятый, ИНН ${inn} корректен по контрольной сумме`);
+} else if (flagOff("legalRequisites")) {
+  ok("Реквизиты не требуются: site.features.legalRequisites = false (исключение spec §9)");
 } else if (/TODO/.test(inn + ogrn) || !inn || !ogrn) prodFail("Реквизиты не заполнены: legal.inn и legal.ogrn (у ИП — legal.ogrnip) в src/content/site.ts");
 else {
   if (!innOk(inn)) fail(`ИНН ${inn} не проходит контрольную сумму (10 цифр — ООО, 12 — ИП; 9 цифр — это КПП, не ИНН). Сверь с ЕГРЮЛ: egrul.nalog.ru`);
