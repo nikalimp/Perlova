@@ -10,6 +10,7 @@ const M = { eye: clay(0x26201f, 0.4), white: clay(0xffffff, 0.5), cheek: clay(0x
 export function figure(o = {}) {
   const skin = clay(o.skin ?? 0xf6d2b8), hair = clay(o.hair ?? 0xe9c46a, 0.7), top = clay(o.top ?? 0xf07d24), bottom = clay(o.bottom ?? 0x2f56a6), shoes = clay(o.shoes ?? 0x5a3a2c);
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const legs = [];
 
   if (o.tail) {
     const t = mesh(new THREE.ConeGeometry(0.2, 0.7, 14), bottom); t.rotation.x = Math.PI; t.position.y = 0.35; body.add(t);
@@ -18,6 +19,7 @@ export function figure(o = {}) {
     [-0.1, 0.1].forEach((x) => {
       const leg = cap(0.07, 0.22, o.dress ? skin : bottom); leg.position.set(x, 0.2, 0); body.add(leg);
       const shoe = sphere(0.09, shoes, 12, 8); shoe.scale.set(1, 0.6, 1.4); shoe.position.set(x, 0.05, 0.04); body.add(shoe);
+      legs.push(leg, shoe);
     });
   }
   const torso = o.dress
@@ -59,11 +61,17 @@ export function figure(o = {}) {
   g.scale.setScalar(o.scale ?? 1);
   const seed = Math.random() * 10;
   g.userData.anchor = anchor;
+  // поза: sit — сидит (ноги спрятаны за столом), write — пишет правой рукой, wave — машет
+  g.userData.pose = { sit: false, write: false, wave: !!o.wave };
   g.userData.update = (t) => {
-    body.position.y = o.hop ? Math.max(0, Math.sin(t * 3 + seed)) * 0.12 : Math.sin(t * 2 + seed) * 0.015;
+    const pose = g.userData.pose;
+    legs.forEach((l) => { l.visible = !pose.sit; });
+    body.position.y = pose.sit ? 0 : o.hop ? Math.max(0, Math.sin(t * 3 + seed)) * 0.12 : Math.sin(t * 2 + seed) * 0.015;
     const blink = (t + seed) % 3.6 < 0.12 ? 0.15 : 1.3; eyes.forEach((e) => { e.scale.y = blink; });
     head.rotation.y = Math.sin(t * 0.5 + seed) * 0.25;
-    if (o.wave) arms[1].rotation.z = 2.5 + Math.sin(t * 6 + seed) * 0.35 * (Math.sin(t * 0.7 + seed) > 0.3 ? 1 : 0);
+    if (pose.write) { arms[1].rotation.set(-1.1 + Math.sin(t * 7) * 0.08, 0, 0.15 + Math.sin(t * 3.1) * 0.12); head.rotation.x = 0.3; }
+    else if (pose.wave) { arms[1].rotation.set(0, 0, 2.5 + Math.sin(t * 6 + seed) * 0.35 * (Math.sin(t * 0.7 + seed) > 0.3 ? 1 : 0)); head.rotation.x = 0; }
+    else { arms[1].rotation.set(0, 0, 0.25); head.rotation.x = 0; }
     if (wings) wings.forEach((w, i) => { w.rotation.y = (i ? 1 : -1) * (0.3 + Math.sin(t * 14) * 0.3); });
   };
   return g;

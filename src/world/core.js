@@ -3,10 +3,39 @@ import * as THREE from 'three';
 
 export { THREE };
 
+// Акварельная бумага (spec v0.4): пятна пигмента и зерно, тайлится. Один холст на все материалы.
+let paperTex;
+function paper() {
+  if (paperTex) return paperTex;
+  const N = 256, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, N, N);
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  // пятна: мягкие круги светлее и темнее, с повтором по краям для бесшовности
+  for (let i = 0; i < 90; i++) {
+    const x = rnd() * N, y = rnd() * N, r = 10 + rnd() * 46, dark = rnd() < 0.55;
+    for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) {
+      const gr = g.createRadialGradient(x + dx, y + dy, r * 0.2, x + dx, y + dy, r);
+      const a = 0.05 + rnd() * 0.07;
+      gr.addColorStop(0, dark ? `rgba(120,95,110,${a})` : `rgba(255,255,255,${a * 2})`);
+      gr.addColorStop(0.85, dark ? `rgba(120,95,110,${a * 1.6})` : 'rgba(255,255,255,0)'); // край пятна темнее — пигмент скапливается
+      gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(x + dx, y + dy, r, 0, Math.PI * 2); g.fill();
+    }
+  }
+  // зерно бумаги
+  const img = g.getImageData(0, 0, N, N), d = img.data;
+  for (let i = 0; i < d.length; i += 4) { const n = (rnd() - 0.5) * 22; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+  g.putImageData(img, 0, 0);
+  paperTex = new THREE.CanvasTexture(c);
+  paperTex.wrapS = paperTex.wrapT = THREE.RepeatWrapping; paperTex.repeat.set(2, 2);
+  paperTex.colorSpace = THREE.SRGBColorSpace; paperTex.anisotropy = 4;
+  return paperTex;
+}
+
 const matCache = new Map();
 export const clay = (color, rough = 0.82, extra = {}) => {
   const key = color + '|' + rough + '|' + JSON.stringify(extra);
-  if (!matCache.has(key)) matCache.set(key, new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0, ...extra }));
+  if (!matCache.has(key)) matCache.set(key, new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0, map: extra.wireframe ? null : paper(), ...extra }));
   return matCache.get(key);
 };
 export const glow = (color, intensity = 1.6) => clay(color, 0.5, { emissive: color, emissiveIntensity: intensity });

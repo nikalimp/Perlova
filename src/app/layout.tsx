@@ -4,7 +4,7 @@ import "@fontsource-variable/lora/wght.css";
 import "@fontsource-variable/lora/wght-italic.css";
 import "./globals.css";
 import { site } from "@/content/site";
-import { TopBar, FootWidget } from "@/components/widgets";
+import { KeyNav } from "@/components/widgets";
 import { World } from "@/components/world";
 import { CookieBanner } from "@/components/cookie-banner";
 import { JsonLd } from "@/components/json-ld";
@@ -39,9 +39,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2">К содержанию</a>
         <World />
-        <TopBar />
+        <KeyNav />
         <main id="main" className="relative z-[1] flex-1">{children}</main>
-        <FootWidget />
         <CookieBanner />
       </body>
     </html>
