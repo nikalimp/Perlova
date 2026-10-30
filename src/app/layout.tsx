@@ -5,6 +5,7 @@ import "@fontsource-variable/lora/wght-italic.css";
 import "./globals.css";
 import { site } from "@/content/site";
 import { KeyNav } from "@/components/widgets";
+import { Preloader } from "@/components/preloader";
 import { World } from "@/components/world";
 import { CookieBanner } from "@/components/cookie-banner";
 import { JsonLd } from "@/components/json-ld";
@@ -23,6 +24,10 @@ export const metadata: Metadata = {
 const metrikaScript = (id: number) =>
   `(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=${id}','ym');ym(${id},'init',{ssr:true,webvisor:true,clickmap:true,referrer:document.referrer,url:location.href,accurateTrackBounce:true,trackLinks:true});`;
 
+// Прелоадер (решение Ника 2026-10-30): включается до первой отрисовки, только если 3D-мир сможет запуститься.
+// Снимается из World после первых кадров сцены; страховка — 12 секунд. Без JS не показывается вовсе.
+const preloadScript = `(function(){try{if(matchMedia('(prefers-reduced-motion: reduce)').matches||!('WebGLRenderingContext' in window))return;var r=document.documentElement;r.classList.add('world-loading');setTimeout(function(){r.classList.remove('world-loading')},12000)}catch(e){}})()`;
+
 const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark')}catch(e){}})()`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -31,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {site.darkTheme && <script dangerouslySetInnerHTML={{ __html: themeScript }} />}
         {site.metrikaId > 0 && <script dangerouslySetInnerHTML={{ __html: metrikaScript(site.metrikaId) }} />}
+        <script dangerouslySetInnerHTML={{ __html: preloadScript }} />
         <JsonLd data={graph(websiteSchema, personSchema)} />
       </head>
       <body className="flex min-h-screen flex-col">
@@ -39,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2">К содержанию</a>
         <World />
+        <Preloader />
         <KeyNav />
         <main id="main" className="relative z-[1] flex-1">{children}</main>
         <CookieBanner />
