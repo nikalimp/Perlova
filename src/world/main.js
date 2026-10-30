@@ -6,6 +6,8 @@ import { buildFandango } from './fandango.js';
 import { buildAsfodel } from './asfodel.js';
 import { buildHome } from './home.js';
 import { addHeroes } from './heroes.js';
+import { buildAuthor } from './author.js';
+import { createPainter } from './paint.js';
 
 // Два режима камеры:
 //   скролл (главная) — камера идёт по ключам KEYS, прогресс берётся из секций .world-sec[data-p];
@@ -24,6 +26,7 @@ renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+const painter = createPainter(renderer, mobile);
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0xf9dcd4, 70, 230);
 const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 400);
@@ -92,6 +95,22 @@ const VIEWS = {
   desk: [() => toW('home', P.home.desk).add(V(4.2, 3.6, 6.4).applyEuler(P.home.root.rotation)), () => toW('home', P.home.desk), 1],
   shelf: [() => toW('home', P.home.shelf).add(V(3.6, 2.4, 6.8).applyEuler(P.home.root.rotation)), () => toW('home', P.home.shelf), 1],
 };
+// ---------- автор-проводник: станции маршрута (spec v0.4). p совпадает с data-p секций главной ----------
+const local3 = (k, x, y, z) => () => atL(k, x, y, z);
+const seatW = () => { const v = new THREE.Vector3(); P.home.seat.getWorldPosition(v); return v; };
+const STATIONS = [
+  { p: 0.00, say: 'intro', wave: true, pos: () => V(10, 34, 64).lerp(V(40, 0, -30), 0.2).add(V(-4.5, -4.2, 0)) },
+  { p: 0.16, say: 'kuv', pos: local3('kuv', 2.2, 0.25, 0.6) },
+  { p: 0.39, say: 'dub', pos: local3('dub', 2.0, 0.18, -0.6) },
+  { p: 0.61, say: 'fan', pos: local3('fan', 2.8, 0.12, 1.1) },
+  { p: 0.72, say: 'gate', hover: true, pos: () => at('asf', 22, 16, 34).lerp(at('asf', 0, 5, 0), 0.35).add(V(-3, -2.5, 0)) },
+  { p: 0.80, say: 'asf', pos: local3('asf', 2.4, 0.12, 2.1) },
+  { p: 0.88, say: 'asf', pos: local3('asf', 2.4, 10.45, 0.2) },
+  { p: 1.00, say: 'home', sit: true, pos: seatW, seatQuat: (q) => P.home.seat.getWorldQuaternion(q) },
+];
+const author = buildAuthor(scene, STATIONS);
+ANCH.author = author.anchor;
+
 const smooth = (t) => t * t * (3 - 2 * t);
 function camAt(p) {
   let i = 0;
@@ -147,6 +166,7 @@ window.__snap = () => { target = progress(); cur = target; first = true; return 
 addEventListener('scroll', onScroll, { passive: true });
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
+  painter.setSize(innerWidth, innerHeight, renderer.getPixelRatio());
   camera.aspect = innerWidth / innerHeight; camera.fov = innerWidth < innerHeight ? 50 : 32; camera.updateProjectionMatrix();
   measure(); onScroll();
 }
@@ -218,7 +238,7 @@ function placeTags() {
       const d = v.distanceTo(cw);
       v.project(camera);
       // табличка книги держится у края экрана, если столбик чуть за кадром; имена героев — только в кадре
-      const lim = el.classList.contains('sign') ? 1.6 : 1.02;
+      const lim = el.classList.contains('sign') || el.classList.contains('say') ? 1.6 : 1.02;
       on = v.z < 1 && Math.abs(v.x) < lim && Math.abs(v.y) < lim && d < +(el.dataset.near || 30);
       if (on) {
         const [w, h] = sizes.get(el) || [0, 0];
@@ -243,7 +263,6 @@ function panelOffset() {
 }
 
 // ---------- цикл ----------
-const counter = () => document.getElementById('steps');
 const clock = new THREE.Clock();
 function local(p, a, b) { return THREE.MathUtils.clamp((p - a) / (b - a), 0, 1); }
 let curZone = '';
@@ -280,8 +299,6 @@ function tick() {
   curZone = ['desk', 'shelf'].includes(near) ? 'home' : near;
   if (root.dataset.zone !== zone) root.dataset.zone = zone;
   if (root.dataset.planet !== curZone) root.dataset.planet = curZone;
-  const railId = curZone === 'home' ? 'home' : `planet-${curZone}`;
-  if (railId !== lastRail) { lastRail = railId; document.querySelectorAll('[data-rail]').forEach((a) => a.toggleAttribute('aria-current', false)); document.querySelector(`[data-rail="${railId}"]`)?.setAttribute('aria-current', 'step'); }
 
   // солнце следует за ближайшей планетой — тени всегда рядом
   const pv = V(...POS[PLANETS.includes(curZone) ? curZone : 'kuv']);
@@ -297,7 +314,9 @@ function tick() {
   P.asf.update(t, reduce, stairs);
   P.home.update(t, reduce, night);
   heroes.update(t, reduce);
-  const c = counter(); if (c) c.textContent = String(P.asf.stepsLit.v);
+  const say = author.update(t, p, camPos, reduce);
+  const sayNow = view ? '' : say;
+  if (root.dataset.say !== sayNow) root.dataset.say = sayNow;
 
   Object.values(P).forEach((pl, i) => { pl.island.position.y = Math.sin(t * 0.6 + i) * 0.12; });
   clouds.forEach((cl, i) => { cl.position.x += Math.sin(t * 0.2 + i) * 0.002; });
@@ -309,7 +328,7 @@ function tick() {
     if (performance.now() > bubbleUntil) { bubble.classList.remove('on'); bubbleAnchor = null; }
   }
 
-  renderer.render(scene, camera);
+  painter.render(scene, camera, night);
   raf = document.hidden ? 0 : requestAnimationFrame(tick); // вкладка скрыта — цикл стоит
 }
 let raf = 0, ready = 0, lastRail = '';
@@ -321,7 +340,8 @@ return () => {
   cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', onVis);
   removeEventListener('scroll', onScroll); removeEventListener('resize', resize); ro.disconnect();
   document.removeEventListener('click', onClick);
-  root.classList.remove('night'); delete root.dataset.zone; delete root.dataset.planet;
+  root.classList.remove('night'); delete root.dataset.zone; delete root.dataset.planet; delete root.dataset.say;
+  painter.dispose();
   renderer.dispose();
 };
 }

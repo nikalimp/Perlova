@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { home } from "@/content/home";
+import { home, say } from "@/content/home";
 import { about } from "@/content/about";
 import { books, planetBooks, type Planet } from "@/content/books";
 import { FaqList } from "@/components/faq";
@@ -12,9 +12,6 @@ import { site } from "@/content/site";
 // [data-anchor] — табличка, которую мир держит над своим 3D-объектом (src/world/heroes.js, home.js).
 // Без 3D-мира (нет WebGL, «уменьшить движение») те же элементы — обычная страница с постерами планет.
 const P: Record<Planet, string> = { kuv: "0.16", dub: "0.39", fan: "0.61", asf: "0.88" };
-const SMELLS = [["well", "Колодец Леденец"], ["river", "Речка"], ["milk", "Парное молоко"], ["stone", "Древнее море"]];
-const DUB = [["oak", "Дуб"], ["nut", "Орех"], ["sponge", "Мочало"]];
-const RAIL = [["planet-kuv", "Кувшинки"], ["planet-dub", "Дуб, орех и мочало"], ["planet-fan", "Цветные запахи лета"], ["planet-asf", "Асфодель"], ["home", "Дом автора"]];
 // Какие герои книги стоят в мире: [индекс в books.characters, якорь фигурки]
 const HEROES: Record<Planet, [number, string][]> = {
   kuv: [[0, "kuv.hero.0"], [2, "kuv.hero.1"], [1, "kuv.hero.2"]],
@@ -38,21 +35,13 @@ export default function Home() {
       <p className="world-verse" id="verse" role="status" aria-live="polite" />
       <p className="world-bubble" id="bubble" role="status" aria-live="polite" />
 
-      <nav className="world-rail widget-rail" aria-label="Маршрут по миру">
-        <ol>
-          {RAIL.map(([id, label]) => (
-            <li key={id}><a href={`#${id}`} data-rail={id}><span className="sr-only">{label}</span><i aria-hidden /><b aria-hidden>{label}</b></a></li>
-          ))}
-        </ol>
-      </nav>
 
       <div className="world-flow">
         <section className="world-sec intro" data-p="0">
-          <div className="widget card intro-card">
-            <p className="world-eyebrow">{home.eyebrow}</p>
-            <h1 className="text-[32px] leading-[1.05] sm:text-5xl">{home.h1}</h1>
-            <p className="mt-3 text-[16px] leading-relaxed sm:text-[17px]">{home.answer}</p>
-            <p className="world-only world-hint mt-3 text-sm text-muted-foreground">{home.hint} <span aria-hidden>↓</span></p>
+          <div className="say say-intro" data-anchor="author" data-say="intro" data-near="90">
+            <h1 className="say-title">{say.intro.h1}</h1>
+            <p>{say.intro.answer}</p>
+            <p className="mt-2">{say.intro.invite} <span className="world-only world-hint" aria-hidden>↓</span></p>
           </div>
         </section>
 
@@ -65,11 +54,9 @@ export default function Home() {
               {k === "asf" && (
                 <>
                   <section className="world-sec gate" data-p="0.72">
-                    <div className="widget card gate-card">
-                      <p className="world-eyebrow">16+</p>
-                      <h2 className="text-2xl sm:text-3xl">{home.gate.title}</h2>
-                      <p className="mt-3">{home.gate.text}</p>
-                      <a href="#home" id="skip16" className="mt-4 inline-flex rounded-full border px-4 py-2 text-[15px] font-medium">{home.gate.skip}</a>
+                    <div className="say" data-anchor="author" data-say="gate" data-near="90">
+                      <p><b>16+.</b> {say.gate.text}</p>
+                      <a href="#home" id="skip16" className="say-btn">{say.gate.skip}</a>
                     </div>
                   </section>
                   <div className="world-spacer" aria-hidden />
@@ -77,6 +64,8 @@ export default function Home() {
               )}
               <section className="world-sec planet" data-p={P[k]} data-planet={k} id={`planet-${k}`} aria-labelledby={`sign-${k}`} style={{ ["--planet" as string]: t.color }}>
                 <img className="world-poster" src={`/world/${k}.webp`} srcSet={`/world/${k}.webp 720w, /world/${k}@2x.webp 1440w`} sizes="(min-width: 640px) 560px, 100vw" alt={`Планета книги «${b.title}»`} loading="lazy" width={720} height={450} />
+
+                <div className="say" data-anchor="author" data-say={k} data-near="90"><p>{say[k]}</p></div>
 
                 {/* Табличка книги на столбике в мире → попап книги */}
                 <Link href={`/books/${b.slug}/`} className="sign" data-anchor={`${k}.sign`} data-near="34" id={`sign-${k}`}>
@@ -86,7 +75,6 @@ export default function Home() {
                   <em>«{t.quote}»</em>
                   <span>Открыть книгу <span aria-hidden>→</span></span>
                 </Link>
-                <p className="sign-lead">{t.lead}</p>
 
                 {/* Имена героев над фигурками → попап героя */}
                 <ul className="hero-tags" aria-label={`Герои книги «${b.title}»`}>
@@ -108,15 +96,6 @@ export default function Home() {
                     );
                   })}
                 </ul>
-
-                {/* Виджет действий планеты: виден, когда камера у этой планеты */}
-                <div className="dock widget" data-for={k}>
-                  {k === "kuv" && (<><button type="button" className="world-chip" id="lilyBtn" aria-pressed="false">{t.action}</button><p className="verse-inline font-serif italic" id="verseInline" aria-hidden /></>)}
-                  {k === "dub" && (<><span className="dock-label">{t.action}</span><div className="chips">{DUB.map(([id, l]) => <button key={id} type="button" className="world-chip" data-dub={id}>{l}</button>)}</div></>)}
-                  {k === "fan" && (<><span className="dock-label">{t.action}</span><div className="chips">{SMELLS.map(([id, l]) => <button key={id} type="button" className="world-chip" data-smell={id}>{l}</button>)}</div></>)}
-                  {k === "asf" && <p><span className="font-serif text-2xl" id="steps">0</span> / 300 {t.action}</p>}
-                  <Link href={`/books/${b.slug}/#buy`} className="world-chip buy">{t.buy}</Link>
-                </div>
               </section>
             </div>
           );
@@ -125,11 +104,8 @@ export default function Home() {
         <div className="world-spacer" aria-hidden />
         <section className="world-sec home" data-p="1" id="home" aria-labelledby="home-title">
           <img className="world-poster" src="/world/home.webp" srcSet="/world/home.webp 720w, /world/home@2x.webp 1440w" sizes="(min-width: 640px) 560px, 100vw" alt="Остров «Дом автора»: стол с лампой, полка с книгами, почтовый ящик" loading="lazy" width={720} height={450} />
-          <div className="widget card home-card">
-            <p className="world-eyebrow">Дом автора</p>
-            <h2 id="home-title" className="text-2xl sm:text-3xl">Евгения Перлова</h2>
-            <p className="mt-2 text-[15px] leading-relaxed sm:text-[16px]">{home.aboutShort}</p>
-          </div>
+          <h2 id="home-title" className="sr-only">Дом автора</h2>
+          <div className="say" data-anchor="author" data-say="home" data-near="90"><p>{say.home}</p></div>
           <ul className="home-signs">
             <li><Link href="/books/" className="sign small" data-anchor="home.books" data-near="30"><small>Полка</small><b>Все книги</b><span>{books.length} книг <span aria-hidden>→</span></span></Link></li>
             <li><Link href="/about/" className="sign small" data-anchor="home.about" data-near="30"><small>Стол автора</small><b>Об авторе</b><span>Биография, премии, встречи <span aria-hidden>→</span></span></Link></li>

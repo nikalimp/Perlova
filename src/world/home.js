@@ -38,8 +38,9 @@ export function buildHome() {
   const back = mesh(rb(0.6, 0.7, 0.08), clay(0xe86f8a)); back.position.set(0, 0.95, -0.25); chair.add(back);
   [[-0.25, -0.22], [0.25, -0.22], [-0.25, 0.22], [0.25, 0.22]].forEach(([x, z]) => { const l = mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.55, 6), clay(0x8a5a3c)); l.position.set(x, 0.27, z); chair.add(l); });
   chair.position.set(0, 0, -0.9); desk.add(chair);
+  const authorSeat = new THREE.Object3D(); authorSeat.position.set(0, 0.34, 0.05); chair.add(authorSeat); // сюда садится автор (src/world/author.js)
   put(desk, 0.6, 0.1, -0.8, -0.2);
-  anchor('about', desk, 1.9);
+  { const a = new THREE.Object3D(); a.position.set(-1.0, 2.2, 0); desk.add(a); anchors['home.about'] = a; } // над лампой — сбоку от автора
 
   // полка с книгами
   const shelf = new THREE.Group();
@@ -96,7 +97,7 @@ export function buildHome() {
   for (let i = 0; i < 36; i++) { const a = i * 2.4, r = 3.2 + (i % 6) * 0.35; const f = sphere(0.06, clay(cols[i % 5], 0.6), 6, 5); f.position.set(Math.cos(a) * r, 0.16, Math.sin(a) * r); island.add(f); }
 
   return {
-    root, island, anchors, hit: [],
+    root, island, anchors, seat: authorSeat, hit: [],
     focus: new THREE.Vector3(0.2, 0.8, -0.4),
     desk: new THREE.Vector3(0.6, 1.1, -0.8),
     shelf: new THREE.Vector3(-3.0, 1.3, -1.4),
