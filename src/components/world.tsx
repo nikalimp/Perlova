@@ -14,9 +14,9 @@ export function World() {
     const root = document.documentElement;
     // прелоадер держится не меньше 1,4 с от начала загрузки — появление мира плавное, без вспышки
     const done = () => setTimeout(() => root.classList.remove("world-loading"), Math.max(0, 1400 - performance.now()));
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return done();
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { done(); return; }
     const probe = document.createElement("canvas");
-    if (!(probe.getContext("webgl2") || probe.getContext("webgl"))) return done();
+    if (!(probe.getContext("webgl2") || probe.getContext("webgl"))) { done(); return; }
     let stop: (() => void) | undefined;
     let alive = true;
     const slugs = Object.fromEntries(planetBooks.map((b) => [b.planet, b.slug]));
