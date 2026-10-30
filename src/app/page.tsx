@@ -114,6 +114,9 @@ export default function Home() {
             <li><Link href="/contacts/" className="sign small" data-anchor="home.contacts" data-near="30"><small>Почтовый ящик</small><b>Написать автору</b><span>Встречи, издание, переводы <span aria-hidden>→</span></span></Link></li>
           </ul>
 
+          {/* копирайт и тег разработчика — табличка на краю острова (решение Ника 2026-10-30) */}
+          <p className="credit" data-anchor="home.credit" data-near="26">© {new Date().getFullYear()} Евгения Перлова · сайт — <a href="https://nikalimp.ru" target="_blank" rel="noopener">nikalimp</a></p>
+
           <div popover="auto" id="reviews" className="pop pop-wide">
             <button type="button" popoverTarget="reviews" popoverTargetAction="hide" className="pop-close" aria-label="Закрыть">×</button>
             <h2 className="mb-5 text-3xl tracking-tight">Что говорят о книгах</h2>

@@ -90,6 +90,13 @@ export function buildHome() {
   put(lantern, 0.2, 0.1, 3.4, -0.3);
   anchor('faq', lantern, 2.4);
 
+  // каменная табличка на краю острова: копирайт и тег разработчика (решение Ника 2026-10-30)
+  const plate = new THREE.Group();
+  const stone = mesh(rb(1.3, 0.5, 0.16, 0.08), clay(0xd9cfc4, 0.95)); stone.position.y = 0.3; stone.rotation.x = -0.25; plate.add(stone);
+  const base = mesh(rb(1.4, 0.12, 0.4, 0.05), clay(0xb9ad9f)); base.position.y = 0.06; plate.add(base);
+  put(plate, 1.8, 0.1, 4.4, 0.3);
+  anchor('credit', plate, 0.2);
+
   // сад
   const cherry = tree(0xf4b6c8, 0x8a6247, 2.0, 0.9); put(cherry, 3.4, 0.1, -2.6);
   const bush = tree(0x7cbf55, 0x8a6247, 0.4, 0.7); put(bush, -4.2, 0.1, 0.6);

@@ -99,7 +99,7 @@ const VIEWS = {
 const local3 = (k, x, y, z) => () => atL(k, x, y, z);
 const seatW = () => { const v = new THREE.Vector3(); P.home.seat.getWorldPosition(v); return v; };
 const STATIONS = [
-  { p: 0.00, say: 'intro', wave: true, pos: () => V(10, 34, 64).lerp(V(40, 0, -30), 0.2).add(V(-4.5, -4.2, 0)) },
+  { p: 0.00, say: 'intro', wave: true, pos: () => V(10, 34, 64).lerp(V(40, 0, -30), 0.2).add(V(-2.2, -4.2, 0)) },
   { p: 0.16, say: 'kuv', pos: local3('kuv', 2.2, 0.25, 0.6) },
   { p: 0.39, say: 'dub', pos: local3('dub', 2.0, 0.18, -0.6) },
   { p: 0.61, say: 'fan', pos: local3('fan', 2.8, 0.12, 1.1) },
@@ -162,7 +162,7 @@ function progress() {
 let target = 0, cur = 0;
 const camPos = V(10, 60, 90), camLook = V(40, 0, -30); let skyP = 0, first = true;
 const onScroll = () => { target = progress(); };
-window.__snap = () => { target = progress(); cur = target; first = true; return target; };
+window.__snap = () => { target = progress(); cur = target; first = true; ready = 1; return target; }; // для съёмки постеров: без плавного появления
 addEventListener('scroll', onScroll, { passive: true });
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
