@@ -12,16 +12,20 @@ export function World() {
   nav.current = router.push;
   useEffect(() => {
     const root = document.documentElement;
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // прелоадер держится не меньше 1,4 с от начала загрузки — появление мира плавное, без вспышки
+    const done = () => setTimeout(() => root.classList.remove("world-loading"), Math.max(0, 1400 - performance.now()));
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return done();
     const probe = document.createElement("canvas");
-    if (!(probe.getContext("webgl2") || probe.getContext("webgl"))) return;
+    if (!(probe.getContext("webgl2") || probe.getContext("webgl"))) return done();
     let stop: (() => void) | undefined;
     let alive = true;
     const slugs = Object.fromEntries(planetBooks.map((b) => [b.planet, b.slug]));
-    import("@/world/main.js").then(({ startWorld }) => {
+    import("@/world/main.js").catch(() => { done(); return null; }).then((m) => {
+      if (!m) return;
+      const { startWorld } = m;
       if (!alive || !ref.current) return;
       root.classList.add("has-world");
-      stop = startWorld(ref.current, { nav: (href: string) => nav.current(href), slugs });
+      stop = startWorld(ref.current, { nav: (href: string) => nav.current(href), slugs, onReady: done });
     });
     return () => { alive = false; stop?.(); root.classList.remove("has-world"); };
   }, []);

@@ -329,9 +329,10 @@ function tick() {
   }
 
   painter.render(scene, camera, night);
+  if (++frames === 3) opts.onReady?.(); // первые кадры готовы — прелоадер можно снять
   raf = document.hidden ? 0 : requestAnimationFrame(tick); // вкладка скрыта — цикл стоит
 }
-let raf = 0, ready = 0, lastRail = '';
+let raf = 0, ready = 0, lastRail = '', frames = 0;
 const onVis = () => { if (!document.hidden && !raf) raf = requestAnimationFrame(tick); };
 document.addEventListener('visibilitychange', onVis);
 lily(0);
