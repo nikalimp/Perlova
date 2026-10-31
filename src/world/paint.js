@@ -16,6 +16,8 @@ uniform float near;
 uniform float far;
 uniform float night;
 uniform float focus;
+uniform vec3 tint;   // цветовая «погода» планеты (spec v0.13)
+uniform vec3 haze;   // цвет воздушной дымки (туман сцены, экранные цвета)
 varying vec2 vUv;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -59,23 +61,28 @@ const body = /* glsl */ `
   col *= 1.0 - 0.55 * occ / float(AO_N);
   // макро: резко в середине кадра, мягко сверху, снизу и вдали — как фото миниатюры
 #ifdef LITE
-  float coc = smoothstep(0.32, 0.5, abs(vUv.y - 0.48)) * 0.7;   // телефон: только размытие сверху и снизу
+  float coc = smoothstep(0.14, 0.5, abs(vUv.y - 0.5));   // телефон: только размытие сверху и снизу (миниатюра)
 #else
   float fd = focus;                                   // фокус — на точке, куда смотрит камера (текущая планета)
   float coc = clamp(abs(d - fd) / fd * 1.6, 0.0, 1.0);
-  coc = max(coc * 0.8, smoothstep(0.32, 0.5, abs(vUv.y - 0.48)) * 0.7);
+  // эффект миниатюры (тилт-шифт, spec v0.13): резкая только средняя полоса кадра, верх и низ сильно размыты
+  coc = max(coc * 0.7, smoothstep(0.14, 0.5, abs(vUv.y - 0.5)));
 #endif
   if (a < 0.01) coc = max(coc, 0.6);
   vec4 acc = vec4(col * a, a); float wsum = 1.0;
   for (int i = 0; i < DOF_N; i++) {
-    float fi = float(i); float ang = fi * 2.39996; float rad = 6.5 * coc * sqrt((fi + 0.5) / float(DOF_N));
+    float fi = float(i); float ang = fi * 2.39996; float rad = 9.0 * coc * sqrt((fi + 0.5) / float(DOF_N));
     vec4 sm = texture2D(tColor, vUv + vec2(cos(ang), sin(ang)) * rad * e);
     acc += vec4(sm.rgb * sm.a, sm.a); wsum += 1.0;
   }
   acc /= wsum; a = acc.a; col = a > 0.001 ? acc.rgb / a : col;
   vec3 o = disp(col);
-  o *= vec3(1.035, 1.0, 0.955);                       // тёплая плёнка
+  o *= vec3(1.035, 1.0, 0.955) * tint;                // тёплая плёнка и палитра планеты
+  // воздушная перспектива: дальнее растворяется в цвете неба — глубина читается сильнее
+  float far = smoothstep(focus * 1.5, focus * 4.5, d) * step(0.01, b.a);
+  o = mix(o, haze, far * 0.38);
   o = mix(o, smoothstep(0.0, 1.0, o), 0.25);            // мягкий контраст
+  o = mix(vec3(dot(o, vec3(0.299, 0.587, 0.114))), o, 1.1); // чуть насыщеннее — как фото игрушечного макета
   o += (hash(fc + 0.37) - 0.5) * 0.045;                 // зерно плёнки
   vec2 q = vUv - 0.5; float v = smoothstep(0.35, 0.85, length(q * vec2(1.0, 1.25))) * 0.32;
   gl_FragColor = vec4(o * a * (1.0 - v), a + (1.0 - a) * v);`;
@@ -86,7 +93,7 @@ export function createPainter(renderer, mobile) {
   rt.depthTexture = new THREE.DepthTexture(1, 1);
   rt.depthTexture.type = THREE.UnsignedIntType;
   const mat = new THREE.ShaderMaterial({
-    uniforms: { tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture }, res: { value: new THREE.Vector2(1, 1) }, px: { value: 1 }, near: { value: 0.1 }, far: { value: 400 }, night: { value: 0 }, focus: { value: 20 } },
+    uniforms: { tColor: { value: rt.texture }, tDepth: { value: rt.depthTexture }, res: { value: new THREE.Vector2(1, 1) }, px: { value: 1 }, near: { value: 0.1 }, far: { value: 400 }, night: { value: 0 }, focus: { value: 20 }, tint: { value: new THREE.Color(1, 1, 1) }, haze: { value: new THREE.Color(1, 0.9, 0.9) } },
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
     fragmentShader: defs + head + 'void main() {' + body + '\n}',
     transparent: true, premultipliedAlpha: true, depthTest: false, depthWrite: false, toneMapped: true,
@@ -97,7 +104,8 @@ export function createPainter(renderer, mobile) {
   renderer.setClearColor(0x000000, 0);
   return {
     setSize(w, h, pr) { rt.setSize(Math.round(w * pr), Math.round(h * pr)); mat.uniforms.res.value.set(Math.round(w * pr), Math.round(h * pr)); mat.uniforms.px.value = pr; },
-    render(scene, camera, night, focus = 20) {
+    render(scene, camera, night, focus = 20, tint, haze) {
+      if (tint) mat.uniforms.tint.value.copy(tint); if (haze) mat.uniforms.haze.value.copy(haze);
       mat.uniforms.near.value = camera.near; mat.uniforms.far.value = camera.far; mat.uniforms.night.value = night; mat.uniforms.focus.value = focus;
       renderer.setRenderTarget(rt); renderer.clear(); renderer.render(scene, camera);
       renderer.setRenderTarget(null); renderer.clear(); renderer.render(qs, qc);

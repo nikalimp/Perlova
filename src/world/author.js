@@ -7,7 +7,7 @@ import { figure } from './figures.js';
 // Внешность — по фото автора, которые прислал Ник 2026-10-31 (фото на сайте не публикуются, decisions.md):
 // волнистые волосы медового оттенка, одного цвета, чуть ниже ушей; соломенная шляпа с широкими полями;
 // оливковое платье, золотая цепочка с кулоном.
-const LOOK = { style: 'wavy', hair: 0xc4975c, skin: 0xf6d6c4, eye: 0x3e5370, top: 0x7a8550, dress: true, shoes: 0x4a3a2c, necklace: 0xd9b54a, hat: 0xe6c886, hatBand: 0xd47a3a, scale: 0.95 };
+const LOOK = { style: 'wavy', hair: 0xc4975c, skin: 0xf6d6c4, eye: 0x3e5370, top: 0x7a8550, dress: true, shoes: 0x4a3a2c, necklace: 0xd9b54a, earrings: 0xe8762c, hat: 0xe6c886, hatBand: 0xd47a3a, scale: 0.95 };
 const W = 0.035; // полуокно посадки на станции (в долях прогресса скролла)
 
 function makeCloud() {

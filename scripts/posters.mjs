@@ -14,7 +14,7 @@ async function open(w, h) {
   const p = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   await p.goto(BASE + "/");
   await p.waitForFunction(() => document.documentElement.classList.contains("has-world"), null, { timeout: 30000 });
-  await p.addStyleTag({ content: ".topbar,.foot,.world-flow,.world-rail,.world-verse,.world-bubble,#cookie-banner,[data-anchor],.dock{visibility:hidden!important}" });
+  await p.addStyleTag({ content: ".topbar,.foot,.world-flow,.world-rail,.world-verse,.world-bubble,#cookie-banner,[data-anchor],.dock,.burger,.scroll-hint,.music-toggle{visibility:hidden!important}" });
   return p;
 }
 async function at(p, ps) {
@@ -37,7 +37,7 @@ async function toWebp(p, png, w, out) {
 
 fs.mkdirSync("public/world", { recursive: true });
 const p = await open(1440, 900);
-for (const [k, ps] of SHOTS) {
+for (const [k, ps] of process.env.ONLY === "og" ? [] : SHOTS) { // ONLY=og — снять только OG-картинку
   await at(p, ps);
   const png = await p.screenshot({ timeout: 180000 });
   await toWebp(p, png, 1440, `public/world/${k}@2x.webp`);

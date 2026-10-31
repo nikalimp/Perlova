@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { planetBooks } from "@/content/books";
+import { books, planetBooks } from "@/content/books";
 
 // 3D-пространство на весь сайт (spec v0.3) — прогрессивное улучшение. Живёт в layout и не пересоздаётся между страницами.
 // Не запускается без WebGL и при prefers-reduced-motion: тогда виджеты и панели — обычная страница, весь текст в HTML.
@@ -42,7 +42,7 @@ export function World() {
       const { startWorld } = m;
       if (!alive || !ref.current) return;
       root.classList.add("has-world");
-      stop = startWorld(ref.current, { nav: (href: string) => nav.current(href), slugs, onReady: done });
+      stop = startWorld(ref.current, { nav: (href: string) => nav.current(href), slugs, covers: books.map((b) => ({ slug: b.slug, cover: b.cover })), onReady: done });
     });
     return () => { alive = false; cancelAnimationFrame(raf); stop?.(); root.classList.remove("has-world"); };
   }, []);

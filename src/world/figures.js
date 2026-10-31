@@ -67,8 +67,10 @@ export function figure(o = {}) {
     const prof = [[0.31, 0], [0.295, 0.1], [0.28, 0.19], [0.255, 0.235], [0.19, 0.265], [0.1, 0.28], [0.001, 0.285]].map(([x, y]) => new THREE.Vector2(x, y));
     const crown = mesh(new THREE.LatheGeometry(prof, 32), straw); crown.receiveShadow = false; hat.add(crown);
     const band = mesh(new THREE.CylinderGeometry(0.33, 0.335, 0.06, 32, 1, true), clay(o.hatBand ?? 0x9b6b3c, 0.8)); band.position.y = 0.05; band.receiveShadow = false; hat.add(band);
-    hat.position.set(0, 0.25, -0.02); hat.rotation.set(-0.12, 0, 0.08); head.add(hat);
+    hat.position.set(0, 0.24, -0.08); hat.rotation.set(-0.42, 0, 0.08); head.add(hat); // сдвинута на затылок: камера сверху видит лицо (v0.13)
   }
+  if (o.bows) [-1, 1].forEach((s) => { const g = new THREE.Group(); [-1, 1].forEach((k) => { const l = sphere(0.07, clay(o.bows, 0.8), 12, 8); l.scale.set(1.2, 0.7, 0.5); l.position.x = k * 0.07; g.add(l); }); g.position.set(s * 0.3, 0.12, 0); g.rotation.z = s * 0.4; head.add(g); }); // банты Сони
+  if (o.earrings) [-1, 1].forEach((s) => { const e = sphere(0.035, clay(o.earrings, 0.5), 12, 8); e.scale.y = 1.3; e.position.set(s * 0.25, -0.2, 0.13); head.add(e); }); // серьги автора: у мочки, впереди волос — видно анфас
   if (o.necklace) {
     const chain = mesh(new THREE.TorusGeometry(0.13, 0.008, 6, 28), clay(o.necklace, 0.3, { metalness: 0.6 })); chain.rotation.x = Math.PI / 2 + 0.35; chain.position.set(0, 0.86, 0.03); body.add(chain);
     const drop = sphere(0.025, clay(o.necklace, 0.3, { metalness: 0.6 }), 8, 6); drop.scale.y = 1.4; drop.position.set(0, 0.79, 0.15); body.add(drop);
