@@ -1,7 +1,7 @@
 // @ts-nocheck — постобработка мира. ЛАБОРАТОРИЯ СТИЛЕЙ: ветка lab/styles, не для main.
 // Стиль берётся из ?style=… (см. core.js). У каждого стиля свой фрагментный шейдер.
 import * as THREE from 'three';
-import { STYLE } from './core.js';
+import { STYLE, LVL } from './core.js';
 
 const head = /* glsl */ `
 #include <packing>
@@ -64,6 +64,48 @@ const bodies = {
 
   // чистый 3D-пластилин, без постобработки (как было до акварели)
   clay: `vec4 b = S(vUv); OUT(b.rgb, b.a);`,
+
+  clay2: `
+  // «Пластилин 2.0»: мягкое затенение в щелях (AO), макро-объектив (размытие вне фокуса), цвет фотографии
+  vec2 fc = vUv * res; vec2 e = vec2(px) / res;
+  float d = depthAt(vUv);
+  vec4 b = texture2D(tColor, vUv);
+  vec3 col = b.rgb; float a = b.a;
+#if LVL >= 4
+  // AO по глубине: 12 точек по спирали, радиус меньше для далёких предметов
+  float occ = 0.0; float rr = clamp(70.0 / d, 3.0, 26.0);
+  for (int i = 0; i < 12; i++) {
+    float fi = float(i); float ang = fi * 2.39996; float rad = rr * sqrt((fi + 0.5) / 12.0);
+    float ds = depthAt(vUv + vec2(cos(ang), sin(ang)) * rad * e);
+    float diff = d - ds;
+    occ += clamp(diff / (0.08 + 0.015 * d), 0.0, 1.0) * (1.0 - smoothstep(0.4 + 0.03 * d, 1.5 + 0.08 * d, diff));
+  }
+  col *= 1.0 - 0.55 * occ / 12.0;
+#endif
+#if LVL >= 5
+  // макро: резко в середине кадра, мягко сверху, снизу и вдали — как фото миниатюры
+  float fd = min(depthAt(vec2(0.5, 0.46)), 80.0);
+  float coc = clamp(abs(d - fd) / fd * 1.6, 0.0, 1.0);
+  coc = max(coc * 0.8, smoothstep(0.32, 0.5, abs(vUv.y - 0.48)) * 0.7);
+  if (a < 0.01) coc = max(coc, 0.6);
+  vec4 acc = vec4(col * a, a); float wsum = 1.0;
+  for (int i = 0; i < 16; i++) {
+    float fi = float(i); float ang = fi * 2.39996; float rad = 6.5 * coc * sqrt((fi + 0.5) / 16.0);
+    vec4 sm = texture2D(tColor, vUv + vec2(cos(ang), sin(ang)) * rad * e);
+    acc += vec4(sm.rgb * sm.a, sm.a); wsum += 1.0;
+  }
+  acc /= wsum; a = acc.a; col = a > 0.001 ? acc.rgb / a : col;
+#endif
+  vec3 o = disp(col);
+#if LVL >= 5
+  o *= vec3(1.035, 1.0, 0.955);                       // тёплая плёнка
+  o = mix(o, smoothstep(0.0, 1.0, o), 0.25);            // мягкий контраст
+  o += (hash(fc + 0.37) - 0.5) * 0.045;                 // зерно плёнки
+  vec2 q = vUv - 0.5; float v = smoothstep(0.35, 0.85, length(q * vec2(1.0, 1.25))) * 0.32;
+  gl_FragColor = vec4(o * a * (1.0 - v), a + (1.0 - a) * v);
+#else
+  OUT(o, a);
+#endif`,
 
   // плоские пастельные грани — «Monument Valley»
   lowpoly: `vec4 b = S(vUv); OUT(b.rgb, b.a);`,
@@ -211,10 +253,10 @@ const bodies = {
   OUT(col, a);`,
 };
 
-const frag = head + 'void main() {\n' + (bodies[STYLE] || bodies.watercolor) + '\n}';
+const frag = '#define LVL ' + LVL + '\n' + head + 'void main() {\n' + (bodies[STYLE] || bodies.watercolor) + '\n}';
 
 export function createPainter(renderer, mobile) {
-  const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: mobile || STYLE === 'pixel' || STYLE === 'stitch' ? 0 : 4 });
+  const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: STYLE === 'clay2' ? 4 : mobile || STYLE === 'pixel' || STYLE === 'stitch' ? 0 : 4 });
   rt.depthTexture = new THREE.DepthTexture(1, 1);
   rt.depthTexture.type = THREE.UnsignedIntType;
   const mat = new THREE.ShaderMaterial({

@@ -12,8 +12,84 @@ function ramp() {
   toonRamp.minFilter = toonRamp.magFilter = THREE.NearestFilter; toonRamp.needsUpdate = true;
   return toonRamp;
 }
+// ---------- «Пластилин 2.0»: ?style=clay2&lvl=1..5 ----------
+export const LVL = +((typeof location !== 'undefined' && new URLSearchParams(location.search).get('lvl')) || 5);
+function heightToNormal(c, k) {
+  const N = c.width, g = c.getContext('2d'), src = g.getImageData(0, 0, N, N).data;
+  const out = g.createImageData(N, N), d = out.data, h = (x, y) => src[(((y + N) % N) * N + ((x + N) % N)) * 4] / 255;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const dx = (h(x + 1, y) - h(x - 1, y)) * k, dy = (h(x, y + 1) - h(x, y - 1)) * k, l = Math.hypot(dx, dy, 1), i = (y * N + x) * 4;
+    d[i] = (-dx / l * 0.5 + 0.5) * 255; d[i + 1] = (dy / l * 0.5 + 0.5) * 255; d[i + 2] = (1 / l * 0.5 + 0.5) * 255; d[i + 3] = 255;
+  }
+  const o = document.createElement('canvas'); o.width = o.height = N; o.getContext('2d').putImageData(out, 0, 0);
+  const t = new THREE.CanvasTexture(o); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
+}
+function canvasN(N, draw) { const c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'); g.fillStyle = '#808080'; g.fillRect(0, 0, N, N); draw(g, N); return c; }
+const wrapDraw = (N, x, y, f) => { for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) f(x + dx, y + dy); };
+let thumbN;
+// отпечатки пальцев, вмятины от большого пальца, следы стека, мелкое зерно
+function thumbs() {
+  if (thumbN) return thumbN;
+  let seed = 11; const r = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const c = canvasN(512, (g, N) => {
+    for (let i = 0; i < 70; i++) { const x = r() * N, y = r() * N, R = 18 + r() * 50, a = 0.10 + r() * 0.12;
+      wrapDraw(N, x, y, (X, Y) => { const gr = g.createRadialGradient(X, Y, 0, X, Y, R); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(0.7, `rgba(0,0,0,${a * 0.5})`); gr.addColorStop(0.92, `rgba(255,255,255,${a * 0.5})`); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(X, Y, R, 0, 7); g.fill(); }); }
+    g.lineWidth = 1.2;
+    for (let i = 0; i < 14; i++) { const x = r() * N, y = r() * N, rot = r() * 3, n = 9 + (r() * 6) | 0;
+      wrapDraw(N, x, y, (X, Y) => { for (let k = 1; k <= n; k++) { g.strokeStyle = `rgba(${k % 2 ? 0 : 255},${k % 2 ? 0 : 255},${k % 2 ? 0 : 255},0.10)`; g.beginPath(); g.ellipse(X, Y, k * 2.2, k * 1.6, rot, r() * 0.8, Math.PI + 1.6 + r()); g.stroke(); } }); }
+    for (let i = 0; i < 30; i++) { const x = r() * N, y = r() * N, a = r() * 6.3, L = 10 + r() * 40;
+      wrapDraw(N, x, y, (X, Y) => { g.strokeStyle = 'rgba(0,0,0,0.16)'; g.lineWidth = 0.8 + r(); g.beginPath(); g.moveTo(X, Y); g.quadraticCurveTo(X + Math.cos(a) * L * 0.5 + 4, Y + Math.sin(a) * L * 0.5, X + Math.cos(a) * L, Y + Math.sin(a) * L); g.stroke(); }); }
+    const img = g.getImageData(0, 0, N, N), d = img.data;
+    for (let i = 0; i < d.length; i += 4) { const v = (r() - 0.5) * 10; d[i] += v; d[i + 1] += v; d[i + 2] += v; }
+    g.putImageData(img, 0, 0);
+  });
+  thumbN = heightToNormal(c, 3.5); thumbN.repeat.set(2, 2);
+  return thumbN;
+}
+// резьба по боку острова: узор штампом, тайлится по окружности
+const carveCache = {};
+export function carved(color, kind) {
+  const key = color + kind; if (carveCache[key]) return carveCache[key];
+  const c = canvasN(256, (g, N) => {
+    g.fillStyle = '#000'; g.strokeStyle = '#000';
+    if (kind === 'dots') for (let i = 0; i < 8; i++) for (let j = 0; j < 3; j++) { const gr = g.createRadialGradient(i * 32 + 16 + (j % 2) * 16, 50 + j * 78, 0, i * 32 + 16 + (j % 2) * 16, 50 + j * 78, 11); gr.addColorStop(0, '#202020'); gr.addColorStop(1, '#808080'); g.fillStyle = gr; g.beginPath(); g.arc(i * 32 + 16 + (j % 2) * 16, 50 + j * 78, 11, 0, 7); g.fill(); }
+    if (kind === 'zigzag') { g.lineWidth = 9; g.strokeStyle = '#303030'; for (const y of [70, 186]) { g.beginPath(); for (let x = -32; x <= N + 32; x += 32) g.lineTo(x, y + ((x / 32) % 2 ? -26 : 26)); g.stroke(); } }
+    if (kind === 'leaves') for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) { const x = i * 64 + 32 + j * 32, y = 64 + j * 128; g.save(); g.translate(x, y); g.rotate(j ? 0.6 : -0.6); g.fillStyle = '#2a2a2a'; g.beginPath(); g.ellipse(0, 0, 26, 11, 0, 0, 7); g.fill(); g.strokeStyle = '#a8a8a8'; g.lineWidth = 3; g.beginPath(); g.moveTo(-24, 0); g.lineTo(24, 0); for (let k = -16; k <= 16; k += 8) { g.moveTo(k, 0); g.lineTo(k + 6, -8); g.moveTo(k, 0); g.lineTo(k + 6, 8); } g.stroke(); g.restore(); }
+    if (kind === 'scallop') { g.lineWidth = 8; g.strokeStyle = '#2c2c2c'; for (let j = 0; j < 4; j++) for (let i = -1; i < 9; i++) { g.beginPath(); g.arc(i * 32 + (j % 2) * 16, j * 64 + 20, 18, 0, Math.PI); g.stroke(); } }
+    if (kind === 'rings') { for (let y = 0; y < N; y += 16) { const gr = g.createLinearGradient(0, y, 0, y + 16); gr.addColorStop(0, '#9a9a9a'); gr.addColorStop(0.5, '#606060'); gr.addColorStop(1, '#9a9a9a'); g.fillStyle = gr; g.fillRect(0, y, N, 16); } }
+    g.filter = 'blur(2px)'; g.drawImage(g.canvas, 0, 0); g.filter = 'none';
+  });
+  const nm = heightToNormal(c, 5); nm.repeat.set(kind === 'rings' ? 1 : 12, 1);
+  // в бороздках темнее — пыль и тень
+  const ao = new THREE.CanvasTexture(c); ao.wrapS = ao.wrapT = THREE.RepeatWrapping; ao.repeat.copy(nm.repeat);
+  const m = new THREE.MeshPhysicalMaterial({ color, roughness: 0.85, metalness: 0, normalMap: nm, normalScale: new THREE.Vector2(1, 1), aoMap: ao, aoMapIntensity: 0.9, sheen: 0.5, sheenRoughness: 0.8, sheenColor: 0x555555 });
+  patchClay(m); carveCache[key] = m; return m;
+}
+// неровные «вылепленные» формы + тёплый подсвет по краю (свет проходит сквозь пластилин)
+function patchClay(m) {
+  if (LVL < 2 && !m.isMeshPhysicalMaterial) return m;
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
+float h3(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float n3(vec3 p){ vec3 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+  return mix(mix(mix(h3(i), h3(i+vec3(1,0,0)), f.x), mix(h3(i+vec3(0,1,0)), h3(i+vec3(1,1,0)), f.x), f.y),
+             mix(mix(h3(i+vec3(0,0,1)), h3(i+vec3(1,0,1)), f.x), mix(h3(i+vec3(0,1,1)), h3(i+vec3(1,1,1)), f.x), f.y), f.z); }`);
+    if (LVL >= 2) sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+transformed += normal * (n3(position * 2.3) - 0.5) * 0.014 * min(length(position), 5.0);`);
+    if (LVL >= 4) sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+float fr = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.2);
+totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.75, 0.62) * fr * 0.35;`);
+  };
+  m.customProgramCacheKey = () => 'clay2-' + LVL;
+  return m;
+}
+
 function makeMat(color, rough, extra) {
   const { wireframe, ...rest } = extra;
+  if (STYLE === 'clay2' && LVL >= 1 && !wireframe) {
+    const m = new THREE.MeshPhysicalMaterial({ color, roughness: Math.max(rough, 0.72), metalness: 0, normalMap: thumbs(), normalScale: new THREE.Vector2(1.1, 1.1), sheen: 0.45, sheenRoughness: 0.75, sheenColor: 0x4a4a4a, ...rest });
+    return patchClay(m);
+  }
   if (STYLE === 'toon') return new THREE.MeshToonMaterial({ color, gradientMap: ramp(), wireframe, ...rest });
   if (STYLE === 'lowpoly') return new THREE.MeshLambertMaterial({ color, flatShading: true, wireframe, ...rest });
   const paperMap = ['watercolor', 'gouache', 'pencil', 'ink'].includes(STYLE) && !wireframe ? paper() : null;
@@ -65,12 +141,15 @@ export const mesh = (g, m) => {
 export const sphere = (r, m, ws = 20, hs = 14) => mesh(new THREE.SphereGeometry(r, ws, hs), m);
 
 // Остров-«пирог»: тело, полосы, травяной бортик, верх
+let carveI = 0;
+const PATTERNS = ['leaves', 'dots', 'zigzag', 'scallop'];
 export function islandBase({ R = 6, soil = 0xb98a64, band = 0x8e6448, cream = 0xf3e3cf, rim = 0x86b85a, top = 0x86b85a, stripes = null }) {
   const g = new THREE.Group();
   const prof = [[0, -2.6], [R * 0.55, -2.6], [R * 0.86, -2.2], [R * 0.95, -1.5], [R * 0.98, -0.9], [R, -0.35], [R, 0], [R * 0.99, 0.12]]
     .map(([x, y]) => new THREE.Vector2(x, y));
-  g.add(mesh(new THREE.LatheGeometry(prof, 72), clay(soil)));
-  const b = mesh(new THREE.CylinderGeometry(R * 1.005, R * 0.99, 0.35, 72, 1, true), clay(band)); b.position.y = -1.1; g.add(b);
+  const C3 = STYLE === 'clay2' && LVL >= 3, pat = PATTERNS[carveI++ % PATTERNS.length];
+  g.add(mesh(new THREE.LatheGeometry(prof, 72), C3 ? carved(soil, 'rings') : clay(soil)));
+  const b = mesh(new THREE.CylinderGeometry(R * 1.005, R * 0.99, C3 ? 0.7 : 0.35, 72, 1, true), C3 ? carved(band, pat) : clay(band)); b.position.y = -1.1; g.add(b);
   const c = mesh(new THREE.CylinderGeometry(R * 0.965, R * 0.9, 0.28, 72, 1, true), clay(cream)); c.position.y = -1.85; g.add(c);
   if (stripes) {
     // швы баскетбольного мяча по боку острова
