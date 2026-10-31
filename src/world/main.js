@@ -8,6 +8,7 @@ import { buildHome } from './home.js';
 import { addHeroes } from './heroes.js';
 import { buildAuthor } from './author.js';
 import { createPainter } from './paint.js';
+import { addLife } from './life.js';
 
 // Два режима камеры:
 //   скролл (главная) — камера идёт по ключам KEYS, прогресс берётся из секций .world-sec[data-p];
@@ -100,16 +101,18 @@ const local3 = (k, x, y, z) => () => atL(k, x, y, z);
 const seatW = () => { const v = new THREE.Vector3(); P.home.seat.getWorldPosition(v); return v; };
 const STATIONS = [
   { p: 0.00, say: 'intro', wave: true, pos: () => V(10, 34, 64).lerp(V(40, 0, -30), 0.2).add(V(-2.2, -4.2, 0)) },
-  { p: 0.16, say: 'kuv', pos: local3('kuv', 2.2, 0.25, 0.6) },
-  { p: 0.39, say: 'dub', pos: local3('dub', 2.0, 0.18, -0.6) },
-  { p: 0.61, say: 'fan', pos: local3('fan', 2.8, 0.12, 1.1) },
+  { p: 0.16, say: 'kuv', pos: local3('kuv', 2.2, 0.25, 0.6), planet: 'kuv' },
+  { p: 0.39, say: 'dub', pos: local3('dub', 2.0, 0.18, -0.6), planet: 'dub' },
+  { p: 0.61, say: 'fan', pos: local3('fan', 2.8, 0.12, 1.1), planet: 'fan' },
   { p: 0.72, say: 'gate', hover: true, pos: () => at('asf', 22, 16, 34).lerp(at('asf', 0, 5, 0), 0.35).add(V(-3, -2.5, 0)) },
-  { p: 0.80, say: 'asf', pos: local3('asf', 2.4, 0.12, 2.1) },
+  { p: 0.80, say: 'asf', pos: local3('asf', 2.4, 0.12, 2.1), planet: 'asf' },
   { p: 0.88, say: 'asf', pos: local3('asf', 2.4, 10.45, 0.2) },
   { p: 1.00, say: 'home', sit: true, pos: seatW, seatQuat: (q) => P.home.seat.getWorldQuaternion(q) },
 ];
 const author = buildAuthor(scene, STATIONS);
 ANCH.author = author.anchor;
+const life = addLife(scene);
+const dented = new Set(), dentW = new THREE.Vector3();
 
 const smooth = (t) => t * t * (3 - 2 * t);
 function camAt(p) {
@@ -307,14 +310,22 @@ function tick() {
   moonLight.target.position.copy(pv); moonLight.position.copy(pv).add(V(-20, 30, 15));
 
   if (curZone !== 'kuv' && P.kuv.open) lily(0);
-  P.kuv.update(t, reduce);
-  P.dub.update(t, reduce, view ? (curZone === 'dub' ? 1 : 0) : local(p, 0.3, 0.39));
-  P.fan.update(t, reduce);
+  // покадровая анимация (spec v0.5): герои и предметы живут на 12 кадрах в секунду, камера и полёт автора — плавно
+  const ts = Math.floor(t * 12) / 12;
+  P.kuv.update(ts, reduce);
+  P.dub.update(ts, reduce, view ? (curZone === 'dub' ? 1 : 0) : local(p, 0.3, 0.39));
+  P.fan.update(ts, reduce);
   const stairs = view ? (curZone === 'asf' ? 0.5 : 0) : local(p, 0.74, 0.88);
-  P.asf.update(t, reduce, stairs);
-  P.home.update(t, reduce, night);
-  heroes.update(t, reduce);
-  const say = author.update(t, p, camPos, reduce);
+  P.asf.update(ts, reduce, stairs);
+  P.home.update(ts, reduce, night);
+  heroes.update(ts, reduce);
+  life.update(ts, night);
+  const say = author.update(ts, p, camPos, reduce);
+  // след облачка: вмятина в траве остаётся там, где автор приземлялся
+  const la = author.landedAt;
+  if (la && la.planet && !dented.has(la)) {
+    dented.add(la); author.cloud.getWorldPosition(dentW); dentW.y = la.pos().y - 0.04; life.dent(P[la.planet].island, dentW);
+  }
   const sayNow = view ? '' : say;
   if (root.dataset.say !== sayNow) root.dataset.say = sayNow;
 
@@ -328,7 +339,7 @@ function tick() {
     if (performance.now() > bubbleUntil) { bubble.classList.remove('on'); bubbleAnchor = null; }
   }
 
-  painter.render(scene, camera, night);
+  painter.render(scene, camera, night, camPos.distanceTo(camLook));
   if (++frames === 3) opts.onReady?.(); // первые кадры готовы — прелоадер можно снять
   raf = document.hidden ? 0 : requestAnimationFrame(tick); // вкладка скрыта — цикл стоит
 }

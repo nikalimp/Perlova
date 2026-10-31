@@ -27,11 +27,17 @@ export function buildHome() {
   const shade = mesh(new THREE.ConeGeometry(0.22, 0.24, 16, 1, true), clay(0xf6d35b, 0.6, { side: THREE.DoubleSide })); shade.position.set(0.16, 0.7, 0); shade.rotation.z = -0.6; lampG.add(shade);
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), glow(0xfff1c2, 3)); bulb.position.set(0.2, 0.64, 0); lampG.add(bulb);
   const lampLight = new THREE.PointLight(0xffd59a, 0, 7, 1.6); lampLight.position.set(0.25, 0.55, 0); lampG.add(lampLight);
+  lampG.userData.dust = { y: 0.5 }; // пыль в свете лампы (life.js)
   const note = mesh(rb(0.7, 0.03, 0.5, 0.01), clay(0xfffbf4)); note.position.set(0.15, 1.03, 0.05); note.rotation.y = 0.2; desk.add(note);
   for (let i = 0; i < 4; i++) { const ln = mesh(new THREE.BoxGeometry(0.5, 0.005, 0.015), clay(0xc9b7c4)); ln.position.set(0.15, 1.05, -0.1 + i * 0.09); ln.rotation.y = 0.2; desk.add(ln); }
   const quill = mesh(new THREE.ConeGeometry(0.05, 0.6, 8), clay(0xfffbf4)); quill.position.set(0.55, 1.2, 0.05); quill.rotation.z = -0.9; desk.add(quill);
   const cup = mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.2, 14), clay(0x3fb8a6)); cup.position.set(0.85, 1.11, -0.25); desk.add(cup);
   const lily = sphere(0.12, clay(0xf7d6dc), 12, 8); lily.scale.y = 0.6; lily.position.set(0.85, 1.26, -0.25); desk.add(lily);
+  // недолепленный кусок пластилина: комок, начатая головка, два шарика и стек (spec v0.5)
+  const lump = sphere(0.11, clay(0xe57a5a), 16, 12); lump.scale.set(1.25, 0.7, 1); lump.position.set(0.5, 1.08, 0.36); desk.add(lump);
+  const bud = sphere(0.055, clay(0xe57a5a), 12, 8); bud.position.set(0.53, 1.18, 0.34); desk.add(bud);
+  [[0x6fb3d9, 0.72, 0.42], [0xf2d06b, 0.66, 0.24]].forEach(([c, x, z]) => { const b = sphere(0.045, clay(c), 10, 8); b.position.set(x, 1.05, z); desk.add(b); });
+  const stack = mesh(new THREE.CylinderGeometry(0.012, 0.018, 0.34, 6), clay(0xd9b98a)); stack.rotation.set(Math.PI / 2, 0, 0.5); stack.position.set(0.32, 1.03, 0.42); desk.add(stack);
   SPINES.slice(0, 4).forEach((c, i) => { const b = mesh(rb(0.5, 0.09, 0.36, 0.02), clay(c)); b.position.set(-0.3, 1.06 + i * 0.09, 0.3); b.rotation.y = (i % 2) * 0.2 - 0.1; desk.add(b); });
   const chair = new THREE.Group();
   const seat = mesh(rb(0.6, 0.1, 0.55), clay(0xe86f8a)); seat.position.y = 0.55; chair.add(seat);

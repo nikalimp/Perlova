@@ -43,6 +43,7 @@ export function buildKuvshinki() {
   const waterGeo = new THREE.CircleGeometry(R * 0.82, 96); waterGeo.rotateX(-Math.PI / 2);
   const water = new THREE.Mesh(waterGeo, new THREE.MeshPhysicalMaterial({ color: 0x3fb8a6, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.25, sheen: 0.6, sheenColor: new THREE.Color(0xbff0e6) }));
   water.position.y = 0.12; water.receiveShadow = true; island.add(water);
+  island.userData.pond = { r: R * 0.55, y: 0.17 }; // рябь (life.js)
   const waterBase = waterGeo.attributes.position.array.slice();
 
   [[-2.6, -1.6, 0.9, 0.3], [2.4, -2.4, 0.75, 2.2], [-1.0, 2.8, 1.0, 4.1], [3.0, 1.6, 0.85, 5.0], [-3.6, 1.0, 0.7, 1.4], [0.6, -3.6, 0.6, 3.1], [-3.4, -2.9, 0.55, 2.6], [1.4, 3.6, 0.6, 0.9]]
