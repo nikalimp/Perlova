@@ -61,12 +61,12 @@ export function figure(o = {}) {
     const side = sphere(0.18, hair, 14, 10); side.scale.set(1.3, 0.5, 0.6); side.position.set(-0.08, 0.17, 0.2); side.rotation.z = 0.35; head.add(side);
   }
   if (o.hat) {
-    // соломенная шляпа с широкими полями и лентой
+    // соломенная шляпа (spec v0.9): тулья — одна фигура вращения, без совпадающих поверхностей (иначе мерцает)
     const straw = clay(o.hat, 0.95), hat = new THREE.Group();
-    const brim = mesh(new THREE.CylinderGeometry(0.56, 0.6, 0.035, 36), straw); hat.add(brim);
-    const crown = mesh(new THREE.CylinderGeometry(0.27, 0.31, 0.22, 28), straw); crown.position.y = 0.12; hat.add(crown);
-    const top = sphere(0.27, straw, 24, 10); top.scale.y = 0.25; top.position.y = 0.23; hat.add(top);
-    const band = mesh(new THREE.CylinderGeometry(0.315, 0.315, 0.06, 28, 1, true), clay(o.hatBand ?? 0x9b6b3c, 0.8)); band.position.y = 0.04; hat.add(band);
+    const brim = mesh(new THREE.CylinderGeometry(0.58, 0.6, 0.04, 40), straw); brim.receiveShadow = false; hat.add(brim);
+    const prof = [[0.31, 0], [0.295, 0.1], [0.28, 0.19], [0.255, 0.235], [0.19, 0.265], [0.1, 0.28], [0.001, 0.285]].map(([x, y]) => new THREE.Vector2(x, y));
+    const crown = mesh(new THREE.LatheGeometry(prof, 32), straw); crown.receiveShadow = false; hat.add(crown);
+    const band = mesh(new THREE.CylinderGeometry(0.33, 0.335, 0.06, 32, 1, true), clay(o.hatBand ?? 0x9b6b3c, 0.8)); band.position.y = 0.05; band.receiveShadow = false; hat.add(band);
     hat.position.set(0, 0.25, -0.02); hat.rotation.set(-0.12, 0, 0.08); head.add(hat);
   }
   if (o.necklace) {
@@ -81,7 +81,7 @@ export function figure(o = {}) {
   if (o.wings) { wings = [-1, 1].map((s) => { const w = sphere(0.3, M.wing, 16, 10); w.scale.set(0.18, 0.9, 0.5); w.position.set(s * 0.18, 0.86, -0.2); w.rotation.z = s * 0.5; w.castShadow = false; body.add(w); return w; }); }
   if (o.prop) { const p = o.prop(); arms[1].add(p); }
 
-  const anchor = new THREE.Object3D(); anchor.position.y = 1.62; body.add(anchor);
+  const anchor = new THREE.Object3D(); anchor.position.y = o.hat ? 1.95 : 1.62; body.add(anchor); // со шляпой — над полями, чтобы бабл не наезжал
   g.scale.setScalar(o.scale ?? 1);
   const seed = Math.random() * 10;
   g.userData.anchor = anchor;
