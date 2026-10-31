@@ -438,8 +438,10 @@ function tick() {
   // параллакс от курсора (spec v0.15): камера чуть облетает точку взгляда — ближние предметы смещаются сильнее дальних
   const pk = 1 - Math.exp(-dtc * 3); par.x += (mouse.x - par.x) * pk; par.y += (mouse.y - par.y) * pk;
   if (!reduce && !view && (par.x || par.y)) {
-    parOff.subVectors(camPos, camLook).applyAxisAngle(UP, -par.x * 0.06);
-    parAxis.crossVectors(parOff, UP).normalize(); parOff.applyAxisAngle(parAxis, -par.y * 0.035);
+    // в приветствии камера далеко от автора — облёт заметнее, поэтому там он в 4 раза слабее; к «Кувшинкам» плавно растёт до полного (spec v0.16)
+    const amp = 0.25 + 0.75 * THREE.MathUtils.smoothstep(p, 0.04, 0.14);
+    parOff.subVectors(camPos, camLook).applyAxisAngle(UP, -par.x * 0.06 * amp);
+    parAxis.crossVectors(parOff, UP).normalize(); parOff.applyAxisAngle(parAxis, -par.y * 0.035 * amp);
     camera.position.addVectors(camLook, parOff);
   }
   camera.lookAt(camLook);
