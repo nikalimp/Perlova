@@ -4,6 +4,7 @@ import "./globals.css";
 import { site } from "@/content/site";
 import { KeyNav } from "@/components/widgets";
 import { Preloader } from "@/components/preloader";
+import { MusicToggle } from "@/components/music";
 import { World } from "@/components/world";
 import { CookieBanner } from "@/components/cookie-banner";
 import { JsonLd } from "@/components/json-ld";
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2">К содержанию</a>
         <World />
         <Preloader />
+        <MusicToggle />
         <KeyNav />
         <main id="main" className="relative z-[1] flex-1">{children}</main>
         <CookieBanner />

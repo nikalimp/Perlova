@@ -3,6 +3,7 @@ import { home, say } from "@/content/home";
 import { about } from "@/content/about";
 import { books, planetBooks, type Planet } from "@/content/books";
 import { FaqList } from "@/components/faq";
+import { MusicButton } from "@/components/music";
 import { JsonLd } from "@/components/json-ld";
 import { bookListSchema, faqSchema, graph } from "@/lib/schema";
 import { site } from "@/content/site";
@@ -52,6 +53,7 @@ export default function Home() {
             <h1 className="say-title">{say.intro.h1}</h1>
             <p>{say.intro.answer}</p>
             <p className="mt-2">{say.intro.invite} <span className="world-only world-hint" aria-hidden>↓</span></p>
+            <p className="world-only mt-2"><MusicButton /></p>
           </div>
         </section>
 

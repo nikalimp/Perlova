@@ -57,6 +57,19 @@ export function carved(color, kind) {
   patchClay(m); carveCache[key] = m; return m;
 }
 // неровные «вылепленные» формы + тёплый подсвет по краю (свет проходит сквозь пластилин)
+// Материал для «запечённых» (склеенных) предметов: неровность уже внесена в вершины на CPU (bake.js), в шейдере — только просвет
+export function rimOnly(m) {
+  const r = m.clone();
+  r.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+float fr = pow(1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0), 2.2);
+totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.75, 0.62) * fr * 0.35;`);
+  };
+  r.customProgramCacheKey = () => 'clay2-baked';
+  return r;
+}
+export const isClay = (m) => m.customProgramCacheKey?.() === 'clay2';
+
 function patchClay(m) {
   m.onBeforeCompile = (sh) => {
     sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>

@@ -1,5 +1,5 @@
 // @ts-nocheck — мир-пространство на весь сайт (spec v0.3). Запускается компонентом World в layout и живёт между страницами.
-import { THREE, cloud, contactShadow } from './core.js';
+import { THREE, cloud } from './core.js';
 import { buildKuvshinki } from './kuvshinki.js';
 import { buildDub } from './dub.js';
 import { buildFandango } from './fandango.js';
@@ -9,6 +9,7 @@ import { addHeroes } from './heroes.js';
 import { buildAuthor } from './author.js';
 import { createPainter } from './paint.js';
 import { addLife } from './life.js';
+import { bakeStatic } from './bake.js';
 
 // Два режима камеры:
 //   скролл (главная) — камера идёт по ключам KEYS, прогресс берётся из секций .world-sec[data-p];
@@ -20,7 +21,7 @@ const slugs = opts.slugs || {};
 const reduce = false; // при prefers-reduced-motion мир не запускается вовсе — показывается статичная страница
 const mobile = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobile, alpha: true, powerPreference: 'high-performance' });
-let pr = Math.min(devicePixelRatio, mobile ? 1.25 : 1.5); // качество кадра; снижается само, если кадры идут медленно
+let pr = Math.min(devicePixelRatio, mobile ? 1.1 : 1.25); // качество кадра; снижается само, если кадры идут медленно
 renderer.setPixelRatio(pr);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -52,7 +53,7 @@ const rim = new THREE.DirectionalLight(0xffb7c8, 0.9); scene.add(rim, rim.target
 // ---------- планеты и Дом автора ----------
 const P = { kuv: buildKuvshinki(), dub: buildDub(), fan: buildFandango(), asf: buildAsfodel(scene), home: buildHome() };
 const POS = { kuv: [0, 0, 0], dub: [34, 3, -30], fan: [68, -2, -62], asf: [104, 4, -96], home: [140, 1, -128] };
-Object.entries(P).forEach(([k, p]) => { p.root.position.set(...POS[k]); p.root.add(contactShadow(6)); scene.add(p.root); });
+Object.entries(P).forEach(([k, p]) => { p.root.position.set(...POS[k]); scene.add(p.root); }); // теней под планетами нет: в космосе им не на что падать (Ник 2026-10-31)
 P.dub.root.rotation.y = -0.4; P.fan.root.rotation.y = -0.2; P.asf.root.rotation.y = -0.3; P.home.root.rotation.y = -0.35;
 const heroes = addHeroes(P);
 const ANCH = { ...heroes.anchors, ...P.home.anchors };
@@ -103,7 +104,7 @@ const local3 = (k, x, y, z) => () => atL(k, x, y, z);
 const seatW = () => { const v = new THREE.Vector3(); P.home.seat.getWorldPosition(v); return v; };
 const STATIONS = [
   // приветствие: автор близко и по центру кадра, лицом к гостю (spec v0.6)
-  { p: 0.00, say: 'intro', wave: true, onCloud: true, pos: () => { const c = V(10, 34, 64); return c.clone().add(V(40, 0, -30).sub(c).normalize().multiplyScalar(9)).add(V(0, -2.1, 0)); } },
+  { p: 0.00, say: 'intro', wave: true, onCloud: true, pos: () => { const c = V(10, 34, 64); return c.clone().add(V(40, 0, -30).sub(c).normalize().multiplyScalar(9)).add(V(0, -2.6, 0)); } },
   { p: 0.16, say: 'kuv', pos: local3('kuv', 2.2, 0.25, 0.6), planet: 'kuv' },
   { p: 0.39, say: 'dub', pos: local3('dub', 4.2, 0.06, 1.2), planet: 'dub' }, // трава справа от площадки: не за щитом (проверено лучом сверху)
   { p: 0.61, say: 'fan', pos: local3('fan', 4.2, 0.06, -1.0), planet: 'fan' }, // лужайка справа: не в речке и не за скамейкой (проверено лучом сверху)
@@ -114,7 +115,18 @@ const STATIONS = [
 const author = buildAuthor(scene, STATIONS);
 ANCH.author = author.anchor;
 const life = addLife(scene);
-if (location.search.includes('debug')) window.__w = { P, scene, STATIONS, THREE }; // проверка перекрытий (scripts, Playwright)
+// облегчение (spec v0.8): неподвижные предметы склеиваются; подвижные находим, прогнав анимации вхолостую
+const SIM = [0.31, 1.73, 3.37, 6.11];
+const bakeInfo = bakeStatic([...Object.values(P).flatMap((p) => p.root.children), ...clouds, author.fig], Object.values(P).flatMap((p) => p.hit || []), (i) => {
+  const t = i < 0 ? 0 : SIM[i], k = i < 0 ? 0 : i % 2;
+  P.kuv.update(t, false); P.dub.update(t, false, k); P.fan.update(t, false); P.asf.update(t, false, k); P.home.update(t, false, k);
+  heroes.update(t, false); life.update(t, k);
+  const pose = author.fig.userData.pose; pose.sit = pose.write = !!k; pose.wave = !k; author.fig.userData.update(t);
+});
+// издалека герои в несколько пикселей — их не рисуем (облегчение, spec v0.8)
+const figs = []; Object.values(P).forEach((pl) => pl.root.traverse((o) => { if (o.userData.pose) figs.push(o); }));
+const figW = new THREE.Vector3();
+if (location.search.includes('debug')) window.__w = { P, scene, STATIONS, THREE, renderer, camera, bakeInfo }; // проверка перекрытий (scripts, Playwright)
 // подсказки у сюрпризов (spec v0.7): точка над каждым интерактивным объектом, к ней привязан ярлык из HTML (.tag-act)
 {
   const box = new THREE.Box3(), top = new THREE.Vector3();
@@ -163,7 +175,7 @@ function measure() {
   const had = sections.length;
   sections = [...document.querySelectorAll('.world-sec[data-p]')];
   // вернулись на главную из попапа (/#planet-dub): прокрутить к месту, когда секции уже в DOM
-  if (!had && sections.length && location.hash.length > 1) { const el = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (el) requestAnimationFrame(() => { el.scrollIntoView({ behavior: 'instant' }); target = progress(); }); }
+  if (!had && sections.length && location.hash.length > 1 && homeY === null) { const el = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (el) requestAnimationFrame(() => { el.scrollIntoView({ behavior: 'instant' }); target = progress(); }); }
   anchors = sections.length ? sections.map((s) => [Math.max(0, s.offsetTop + s.offsetHeight - innerHeight), +s.dataset.p]) : [[0, 0]];
   anchors[0][0] = 0;
 }
@@ -177,6 +189,7 @@ function progress() {
   return anchors[anchors.length - 1][1];
 }
 let target = 0, cur = 0;
+let homeP = null, homeY = null, backUntil = 0; // где была главная, когда открыли страницу (spec v0.8)
 const camPos = V(10, 60, 90), camLook = V(40, 0, -30); let skyP = 0, first = true;
 const onScroll = () => { target = progress(); };
 window.__snap = () => { target = progress(); cur = target; first = true; ready = 1; return target; }; // для съёмки постеров: без плавного появления
@@ -309,7 +322,8 @@ let offX = 0, offY = 0;
 function panelOffset() {
   const pn = document.querySelector('[data-world-panel]');
   let tx = 0, ty = 0;
-  if (pn) { const r = pn.getBoundingClientRect(); if (innerWidth >= 900) tx = (innerWidth - r.left) / 2; else ty = Math.max(0, innerHeight - r.top) / 2; }
+  // лист по центру (spec v0.8): сцену не сдвигаем; сдвиг остаётся только для прямого захода на страницу
+  if (pn && homeP === null) { const r = pn.getBoundingClientRect(); if (innerWidth >= 900) tx = (innerWidth - r.left) / 2; else ty = Math.max(0, innerHeight - r.top) / 2; }
   offX += (tx - offX) * 0.08; offY += (ty - offY) * 0.08;
   if (Math.abs(offX) + Math.abs(offY) < 0.5) camera.clearViewOffset();
   else camera.setViewOffset(innerWidth, innerHeight, offX, offY, innerWidth, innerHeight);
@@ -325,10 +339,19 @@ function tick() {
   const viewEl = document.querySelector('[data-world-view]');
   const view = viewEl && VIEWS[viewEl.dataset.worldView];
   let cp, lp, p;
-  if (view) { cp = view[0](); lp = view[1](); p = view[2]; }
+  // Пришли на страницу с главной — камера не летит к столу или полке, а стоит на месте; страница — лист по центру (spec v0.8)
+  const frozen = !!view && homeP !== null;
+  if (frozen) { p = homeP; [cp, lp] = camAt(p); }
+  else if (view) { cp = view[0](); lp = view[1](); p = view[2]; }
   else { cur += (target - cur) * 0.07; p = cur; [cp, lp] = camAt(p); }
-  // закрыли панель страницы (/#home, /#planet-…): страница главной снова в DOM — встаём на якорь без анимации
-  if (wasView && !view && location.hash.length > 1) { const el = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (el) { el.scrollIntoView({ behavior: 'instant' }); target = progress(); } }
+  // закрыли страницу: главная снова в DOM — возвращаем ровно ту прокрутку, что была до открытия (без скачка камеры)
+  if (wasView && !view) {
+    measure();
+    if (homeY !== null) { backUntil = performance.now() + 400; target = cur = p = homeP; [cp, lp] = camAt(p); }
+    else if (location.hash.length > 1) { const el = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (el) { el.scrollIntoView({ behavior: 'instant' }); target = progress(); } }
+  }
+  if (!view && performance.now() < backUntil) { if (Math.abs(scrollY - homeY) > 2) scrollTo({ top: homeY, behavior: 'instant' }); target = cur = homeP; }
+  else if (!view) { homeP = cur; homeY = scrollY; }
   wasView = !!view;
   if (innerWidth < innerHeight && !view) lp.y -= 2.2;
   const k = first ? 1 : view ? 0.045 : 0.3; first = false;
@@ -376,6 +399,9 @@ function tick() {
     P.home.update(ts, reduce, night);
     heroes.update(ts, reduce);
     life.update(ts, night);
+    figs.forEach((f) => { f.getWorldPosition(figW); f.visible = figW.distanceTo(camPos) < 42; });
+    // детализация: отдельная мелочь, которая на экране меньше ~6 px, уходит на слой 1 (не рисуется)
+    bakeInfo.rest.forEach(({ o, r }) => { o.getWorldPosition(figW); o.layers.set(r / figW.distanceTo(camPos) > 0.0025 ? 0 : 1); });
     renderer.shadowMap.needsUpdate = true;
   }
   const say = author.update(ts, p, camPos, reduce);
@@ -400,7 +426,7 @@ function tick() {
   // фокус объектива: на авторе, пока она говорит, иначе — на точке взгляда камеры
   // само снижает чёткость кадра, если видеокарта не успевает (средний кадр дольше 24 мс)
   const now = performance.now(); if (lastNow) frameMs += (Math.min(100, now - lastNow) - frameMs) * 0.05; lastNow = now;
-  if (++perfN > 90) { perfN = 0; if (frameMs > 24 && pr > 0.8) { pr = Math.max(0.75, pr - 0.25); renderer.setPixelRatio(pr); resize(); } }
+  if (++perfN > 90) { perfN = 0; if (frameMs > 21 && pr > 0.8) { pr = Math.max(0.75, pr - 0.25); renderer.setPixelRatio(pr); resize(); } }
   painter.render(scene, camera, night, sayNow ? camPos.distanceTo(author.root.position) : camPos.distanceTo(camLook));
   if (++frames === 3) opts.onReady?.(); // первые кадры готовы — прелоадер можно снять
   raf = document.hidden ? 0 : requestAnimationFrame(tick); // вкладка скрыта — цикл стоит
