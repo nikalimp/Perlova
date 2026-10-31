@@ -83,7 +83,7 @@ const KEYS = [
   [0.55, () => at('fan', 9, 11, 15), () => at('fan', 0, 0, 0)],
   [0.61, () => dive('fan'), () => focus('fan')],
   [0.72, () => at('asf', 22, 16, 34), () => at('asf', 0, 5, 0)],
-  [0.80, () => atL('asf', 7, 2.5, 13), () => atL('asf', 0, 4.5, 0)],
+  [0.80, () => atL('asf', 7, 3.4, 13), () => atL('asf', 0, 2.8, 0)], // герои и автор внизу целиком в кадре, лестница видна
   [0.88, () => atL('asf', 7, 15, 10), () => atL('asf', 1.2, 10.2, -1.6)],
   [0.94, () => at('home', 16, 13, 20), () => at('home', 0, 0, 0)],
   [1.00, () => dive('home'), () => focus('home')],
@@ -105,10 +105,10 @@ const seatW = () => { const v = new THREE.Vector3(); P.home.seat.getWorldPositio
 const STATIONS = [
   // приветствие: автор близко и по центру кадра, лицом к гостю (spec v0.6)
   { p: 0.00, say: 'intro', wave: true, onCloud: true, pos: () => { const c = V(10, 34, 64); return c.clone().add(V(40, 0, -30).sub(c).normalize().multiplyScalar(9)).add(V(0, -2.5, 0)); } },
-  { p: 0.16, say: 'kuv', pos: local3('kuv', 2.5, 0.3, 1.3), planet: 'kuv' }, // ниже в кадре: над автором есть место для реплики
+  { p: 0.16, say: 'kuv', pos: local3('kuv', 1.7, 0.27, 0.1), planet: 'kuv' }, // край большого листа: твёрдо под ногами (луч сверху), над автором есть место для реплики
   { p: 0.39, say: 'dub', pos: local3('dub', 4.2, 0.06, 1.2), planet: 'dub' }, // трава справа от площадки: не за щитом (проверено лучом сверху)
   { p: 0.61, say: 'fan', pos: local3('fan', 4.2, 0.06, -1.0), planet: 'fan' }, // лужайка справа: не в речке и не за скамейкой (проверено лучом сверху)
-  { p: 0.80, say: 'asf', pos: local3('asf', 2.4, 0.12, 2.1), planet: 'asf' },
+  { p: 0.80, say: 'asf', pos: local3('asf', 2.8, 0.06, 0.4), planet: 'asf' }, // дальше от камеры: целиком в кадре, над головой нет ступеней (луч сверху)
   { p: 1.00, say: 'home', sit: true, pos: seatW, seatQuat: (q) => P.home.seat.getWorldQuaternion(q) },
 ];
 const author = buildAuthor(scene, STATIONS);
@@ -295,7 +295,7 @@ function placeTags() {
       if (on) {
         const [w, h] = sizes.get(el) || [0, 0];
         const x = clamp((v.x * 0.5 + 0.5) * innerWidth, w / 2 + 8, innerWidth - w / 2 - 8);
-        let y = clamp((-v.y * 0.5 + 0.5) * innerHeight, h + 70, innerHeight - 70);
+        let y = clamp((-v.y * 0.5 + 0.5) * innerHeight, h + 12, innerHeight - 40); // меню сверху нет — отступ от края небольшой
         const isSay = el.classList.contains('say');
         if (isSay && innerWidth <= 640) { const r = el.getBoundingClientRect(); if (r.height && root.dataset.say === el.dataset.say) placed.push([r.left, r.top, r.right, r.bottom]); }
         else {
@@ -305,10 +305,10 @@ function placeTags() {
             // сначала пробуем выше, потом ниже того, на что наехали
             let up = y; for (let i = 0; i < 6; i++) { const q = clash(up); if (!q) break; up = q[1] - 6; }
             let dn = y; for (let i = 0; i < 6; i++) { const q = clash(dn); if (!q) break; dn = q[3] + h + 6; }
-            y = up - h > 60 && (y - up <= dn - y || dn > innerHeight - 20) ? up : dn;
+            y = up - h > 8 && (y - up <= dn - y || dn > innerHeight - 20) ? up : dn;
           }
           const shown = !isSay || root.dataset.say === el.dataset.say; // реплика видна только у своей станции
-          if (isSay || (y - h > 60 && y < innerHeight - 20)) { if (shown) placed.push([x - w / 2, y - h, x + w / 2, y]); el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`; }
+          if (isSay || (y - h > 8 && y < innerHeight - 20)) { if (shown) placed.push([x - w / 2, y - h, x + w / 2, y]); el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`; }
           else on = false; // места нет — ярлык прячется, пока камера не повернётся
         }
       }

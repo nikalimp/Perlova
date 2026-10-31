@@ -7,6 +7,7 @@ let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let timer = 0;
 let playing = false;
+let started = false; // музыку уже включали — в углу виден переключатель звука
 let nextT = 0;
 let step = 0;
 const listeners = new Set<Listener>();
@@ -59,6 +60,7 @@ function schedule() {
 }
 
 export function isMusicOn() { return playing; }
+export function wasMusicStarted() { return started; }
 export function onMusic(fn: Listener) { listeners.add(fn); return () => { listeners.delete(fn); }; }
 const emit = () => listeners.forEach((fn) => fn(playing));
 
@@ -73,7 +75,7 @@ export async function setMusic(on: boolean) {
     master!.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 2.5); // мягкое появление
     nextT = ctx.currentTime + 0.1; step = 0;
     schedule(); timer = window.setInterval(schedule, 200);
-    playing = true;
+    playing = true; started = true;
   } else if (ctx && master) {
     const t = ctx.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value, t); master.gain.linearRampToValueAtTime(0, t + 1);
     window.clearInterval(timer); playing = false;
