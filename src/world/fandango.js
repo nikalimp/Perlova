@@ -6,10 +6,10 @@ const rb = (w, h, d, r = 0.08) => new RoundedBoxGeometry(w, h, d, 3, r);
 
 // Оттенки пантонного веера из книги (hex — подбор под названия)
 export const SHADES = {
-  well: { name: 'ослепительно синий с крапинками фанданго', color: 0x3850a0 },
-  river: { name: 'турбулентный серый', color: 0x6f767e },
-  milk: { name: 'розовый загар', color: 0xd19c97 },
-  stone: { name: 'угольный', color: 0x4a4646 },
+  well: { label: 'Колодец', name: 'ослепительно синий с крапинками фанданго', color: 0x3850a0 },
+  river: { label: 'Речка', name: 'турбулентный серый', color: 0x6f767e },
+  milk: { label: 'Парное молоко', name: 'розовый загар', color: 0xd19c97 },
+  stone: { label: 'Камень', name: 'угольный', color: 0x4a4646 },
 };
 
 // «Цветные запахи лета и немного фанданго» — летняя деревня: зелёный домик, речка с понтоном, колодец Леденец, «древнее море», зарянка
@@ -112,7 +112,7 @@ export function buildFandango() {
   // аура «понюхать цветом»
   const aura = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
   aura.renderOrder = 2; island.add(aura);
-  let auraT = 0, auraTarget = 0;
+  let auraT = 0, auraTarget = 0, auraSize = 1, tint = null;
   const targets = { well, river, milk: jug, stone };
 
   let fanOpen = 0.15;
@@ -122,18 +122,26 @@ export function buildFandango() {
     focus: new THREE.Vector3(0.4, 0.6, -0.8),
     pick(obj) { if (blades.includes(obj)) return 'fan'; while (obj && !obj.userData.id) obj = obj.parent; return obj ? obj.userData.id : null; },
     press(id) {
-      if (id === 'fan') { fanOpen = fanOpen > 0.5 ? 0.15 : 1; return null; }
+      if (id === 'fan') { fanOpen = fanOpen > 0.5 ? 0.15 : 1; return fanOpen > 0.5 ? 'Пантонный веер Яси: у каждого запаха — свой цвет' : null; }
       const s = SHADES[id]; if (!s) return null;
-      const o = targets[id]; const p = new THREE.Vector3(); o.getWorldPosition(p); island.worldToLocal(p);
-      aura.position.copy(p); aura.position.y += 0.5; aura.material.color.setHex(s.color); auraTarget = 1; auraT = 0;
-      return `Пахнет цветом «${s.name}»`;
+      // облачко запаха — в центре самого предмета и по его размеру (раньше ставилось в начало координат: у речки это камень)
+      const o = targets[id]; o.updateWorldMatrix(true, true);
+      const bx = new THREE.Box3().setFromObject(o), c = bx.getCenter(new THREE.Vector3()), sz = bx.getSize(new THREE.Vector3());
+      island.worldToLocal(c); aura.position.copy(c); auraSize = Math.min(2.2, Math.max(0.7, Math.max(sz.x, sz.z) * 0.45));
+      aura.material.color.setHex(s.color); auraTarget = 1; auraT = 0;
+      // сам предмет на секунду окрашивается в цвет запаха — видно, что «понюхали» именно его
+      tint = { o, color: new THREE.Color(s.color), k: 1 };
+      o.traverse((m) => { if (m.isMesh && !m.userData.ownMat) { m.material = m.material.clone(); m.userData.ownMat = true; } });
+      if (fanOpen < 0.5) fanOpen = 1; // веер раскрывается: цвет запаха — из него
+      return `${s.label} пахнет цветом «${s.name}»`;
     },
     anchorOf(id) { return id === 'fan' ? fan : targets[id]; },
     update(t) {
       blades.forEach((b, i) => { b.rotation.z = THREE.MathUtils.lerp(b.rotation.z, (i - 3.5) * 0.2 * fanOpen, 0.08); });
       auraT += 0.016; if (auraT > 2.2) auraTarget = 0;
       aura.material.opacity += ((auraTarget ? 0.32 : 0) - aura.material.opacity) * 0.08;
-      aura.scale.setScalar(0.6 + aura.material.opacity * 4);
+      aura.scale.setScalar(auraSize * (0.6 + aura.material.opacity * 2.2));
+      if (tint) { tint.k = Math.max(0, tint.k - 0.012); tint.o.traverse((m) => { if (m.isMesh && m.material.emissive) { m.material.emissive.copy(tint.color); m.material.emissiveIntensity = tint.k * 0.55; } }); if (!tint.k) tint = null; }
       robin.position.y = 0.95 + Math.abs(Math.sin(t * 3)) * 0.05; robin.rotation.y = Math.sin(t * 0.7) * 0.4;
       flame.scale.x = 1 + Math.sin(t * 9) * 0.15;
       chicks.forEach((c, i) => { c.position.x += Math.sin(t * 1.5 + i) * 0.003; c.rotation.y = Math.sin(t + i) * 0.8; });

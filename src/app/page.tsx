@@ -48,7 +48,7 @@ export default function Home() {
 
 
       <div className="world-flow">
-        <section className="world-sec intro" data-p="0">
+        <section className="world-sec intro" data-p="0" id="intro">
           <div className="say say-intro" data-anchor="author" data-say="intro" data-near="90">
             <h1 className="say-title">{say.intro.h1}</h1>
             <p>{say.intro.answer}</p>
@@ -56,6 +56,8 @@ export default function Home() {
             <p className="world-only mt-2">{say.intro.music}</p>
             <div className="world-only say-play-row"><MusicButton /></div>
           </div>
+          {/* подсказка «листайте» (spec v0.11, дизайнер): видна только на первом экране, пока не начали листать */}
+          <div className="scroll-hint world-only" aria-hidden="true"><span className="scroll-hint-mouse" /><span>Листайте вниз</span></div>
         </section>
 
         {planetBooks.map((b) => {

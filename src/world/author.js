@@ -60,7 +60,7 @@ export function buildAuthor(scene, stations) {
       root.rotation.y = yaw;
 
       // облачко: в полёте — под ногами, на земле — рядом и ниже, за столом — паркуется в стороне
-      const cx = sit ? 1.6 : land * 1.0, cy = sit ? 1.2 : -0.22 + land * 0.35;
+      const cx = sit ? 1.6 : land * 1.05, cy = sit ? 1.2 : -0.22 + land * 0.75; // после посадки облачко парит рядом на уровне пояса — не тонет в траве и кустах
       cloud.position.set(cx, cy, sit ? -0.4 : 0); cloud.scale.setScalar(1 - land * 0.25);
       fig.position.y = sit ? 0 : -0.02;
 
