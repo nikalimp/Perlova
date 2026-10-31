@@ -4,12 +4,12 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 
 const rb = (w, h, d, r = 0.08) => new RoundedBoxGeometry(w, h, d, 3, r);
 
-// Оттенки пантонного веера из книги (hex — подбор под названия)
+// Оттенки пантонного веера из книги (hex — подбор под названия); quote — дословно из книги (specs/source/books/fandango.md)
 export const SHADES = {
-  well: { label: 'Колодец', name: 'ослепительно синий с крапинками фанданго', color: 0x3850a0 },
-  river: { label: 'Речка', name: 'турбулентный серый', color: 0x6f767e },
+  well: { label: 'Колодец', quote: 'А колодец зовётся Леденец, потому что вода холоднючая и чуть сладкая', name: 'ослепительно синий с крапинками фанданго', color: 0x3850a0 },
+  river: { label: 'Речка', quote: 'река дотягивалась до пяток брызгами, бурлила, сверкала на солнце', name: 'турбулентный серый', color: 0x6f767e },
   milk: { label: 'Парное молоко', name: 'розовый загар', color: 0xd19c97 },
-  stone: { label: 'Камень', name: 'угольный', color: 0x4a4646 },
+  stone: { label: 'Камень', quote: 'Море из нашей деревни, да?', name: 'угольный', color: 0x4a4646 },
 };
 
 // «Цветные запахи лета и немного фанданго» — летняя деревня: зелёный домик, речка с понтоном, колодец Леденец, «древнее море», зарянка
@@ -122,7 +122,7 @@ export function buildFandango() {
     focus: new THREE.Vector3(0.4, 0.6, -0.8),
     pick(obj) { if (blades.includes(obj)) return 'fan'; while (obj && !obj.userData.id) obj = obj.parent; return obj ? obj.userData.id : null; },
     press(id) {
-      if (id === 'fan') { fanOpen = fanOpen > 0.5 ? 0.15 : 1; return fanOpen > 0.5 ? 'Пантонный веер Яси: у каждого запаха — свой цвет' : null; }
+      if (id === 'fan') { fanOpen = fanOpen > 0.5 ? 0.15 : 1; return fanOpen > 0.5 ? 'Пантонный веер: у каждого запаха — свой цвет\n«старенький, потрёпанный, без обложки»' : null; }
       const s = SHADES[id]; if (!s) return null;
       // облачко запаха — в центре самого предмета и по его размеру (раньше ставилось в начало координат: у речки это камень)
       const o = targets[id]; o.updateWorldMatrix(true, true);
@@ -133,7 +133,7 @@ export function buildFandango() {
       tint = { o, color: new THREE.Color(s.color), k: 1 };
       o.traverse((m) => { if (m.isMesh && !m.userData.ownMat) { m.material = m.material.clone(); m.userData.ownMat = true; } });
       if (fanOpen < 0.5) fanOpen = 1; // веер раскрывается: цвет запаха — из него
-      return `${s.label} пахнет цветом «${s.name}»`;
+      return `${s.label} пахнет цветом «${s.name}»` + (s.quote ? `\n«${s.quote}»` : '');
     },
     anchorOf(id) { return id === 'fan' ? fan : targets[id]; },
     update(t) {

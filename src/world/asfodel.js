@@ -90,7 +90,7 @@ export function buildAsfodel(scene) {
     stepsLit,
     update(t, reduce, local) {
       const lit = Math.round(local * N);
-      stepsLit.v = Math.round(local * 300);
+      stepsLit.v = Math.round(local * 300); stepsLit.n = lit; // сколько ступеней горит — для ксилофона (main.js)
       steps.forEach((s, i) => {
         const on = i < lit;
         s.material.emissiveIntensity += ((on ? 1.4 + Math.sin(t * 3 + i) * 0.2 : 0.05) - s.material.emissiveIntensity) * 0.15;

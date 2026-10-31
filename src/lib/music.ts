@@ -60,6 +60,8 @@ function schedule() {
 }
 
 export function isMusicOn() { return playing; }
+// общий выход звука для эффектов и фона сцен (src/lib/sound.ts): есть, только пока звук включён
+export function audioBus() { return playing && ctx && master ? { ctx, out: master } : null; }
 export function wasMusicStarted() { return started; }
 export function onMusic(fn: Listener) { listeners.add(fn); return () => { listeners.delete(fn); }; }
 const emit = () => listeners.forEach((fn) => fn(playing));
