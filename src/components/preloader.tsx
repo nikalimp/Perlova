@@ -14,7 +14,7 @@ export function Preloader() {
         <span id="preloader-pct">0%</span>
       </div>
       <p className="preloader-name">Евгения Перлова</p>
-      <p className="preloader-text">Раскрываем миры книг…</p>
+      <p className="preloader-text">Загружаем миры книг</p>
     </div>
   );
 }

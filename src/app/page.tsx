@@ -79,22 +79,15 @@ export default function Home() {
                 <div className="say" data-anchor="author" data-say={k} data-near="90"><p>{say[k]}</p></div>
 
 
-                {/* Имена героев над фигурками → попап героя */}
+                {/* Имена героев над фигурками → бабл героя */}
                 <ul className="hero-tags" aria-label={`Герои книги «${b.title}»`}>
                   {HEROES[k].map(([i, a]) => {
                     const c = b.characters[i];
                     return (
                       <li key={a}>
-                        <button type="button" className="tag" data-anchor={a} data-near="20" popoverTarget={`hero-${a}`}>{shortName(c.name)}</button>
-                        <div popover="auto" id={`hero-${a}`} className="pop pop-hero" style={{ ["--planet" as string]: t.color }}>
-                          <p className="world-eyebrow">Герой книги «{b.title}»</p>
-                          <h3 className="text-2xl">{c.name}</h3>
-                          <p className="mt-2 text-[17px] leading-relaxed">{c.name.split(" (")[0]} — {c.text}</p>
-                          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-                            <Link href={`/books/${b.slug}/`} className="hand-link">О книге</Link>
-                            <button type="button" popoverTarget={`hero-${a}`} popoverTargetAction="hide" className="hand-link">Закрыть</button>
-                          </div>
-                        </div>
+                        {/* клик по имени или фигурке — бабл над героем (spec v0.15); описание — в HTML для всех, на 3D-сцене скрыто визуально */}
+                        <button type="button" className="tag" data-anchor={a} data-near="20" data-hero={a} aria-describedby={`hero-${a}`}>{shortName(c.name)}</button>
+                        <p id={`hero-${a}`} className="hero-desc">{c.name.split(" (")[0]} — {c.text}</p>
                       </li>
                     );
                   })}

@@ -204,40 +204,40 @@ const TINT = { kuv: new THREE.Color(0.97, 1.02, 1.04), dub: new THREE.Color(1.03
 const gradeTint = new THREE.Color(1, 1, 1), hazeC = new THREE.Color(); const fpsEl = location.search.includes('fps') ? Object.assign(document.body.appendChild(document.createElement('div')), { style: 'position:fixed;left:10px;top:10px;z-index:99;font:12px/1 monospace;background:#000a;color:#fff;padding:6px 8px;border-radius:6px;pointer-events:none' }) : null;
 let homeP = null, homeY = null, backUntil = 0; // где была главная, когда открыли страницу (spec v0.8)
 const camPos = V(10, 60, 90), camLook = V(40, 0, -30); let skyP = 0, first = true;
-let xyStep = -1, xyAt = 0;
-const onScroll = () => {
-  target = progress(); if (!snapping) armSnap();
-  // ксилофон (spec v0.12): 42 ноты на весь путь — листаешь, как ведёшь палочкой по ксилофону (мажорная гамма, две октавы)
-  const st = Math.floor(target * 42), now = performance.now();
-  if (st !== xyStep && now - xyAt > 70) { if (xyStep >= 0) xylo(((st % 14) + 14) % 14, 0.08); xyStep = st; xyAt = now; }
-};
-// Доводка скролла (spec v0.11, дизайнер): человек перестал листать между сценами — плавно доводим до ближайшей остановки.
-// Остановки — точки, где автор говорит: приветствие и планеты. Любое касание, колесо или клавиша доводку отменяют.
-const STOPS = [0, 0.16, 0.39, 0.61, 0.80, 0.88, 1]; // 0.88 — Город Снегов наверху лестницы
-let snapTimer = 0, snapping = false, snapRaf = 0;
-const yOf = (pv) => { // обратная к progress(): прокрутка, при которой прогресс = pv
-  for (let i = 0; i < anchors.length - 1; i++) { const [y0, p0] = anchors[i], [y1, p1] = anchors[i + 1]; if (pv <= p1) return y0 + (y1 - y0) * ((pv - p0) / Math.max(1e-6, p1 - p0)); }
-  return anchors[anchors.length - 1][0];
-};
-const stopSnap = () => { snapping = false; cancelAnimationFrame(snapRaf); clearTimeout(snapTimer); };
-function armSnap() {
-  clearTimeout(snapTimer);
-  snapTimer = setTimeout(() => {
-    if (document.querySelector('[data-world-view]') || document.querySelector(':popover-open') || anchors.length < 2) return;
-    const ys = STOPS.map(yOf), y = scrollY; let best = ys[0]; ys.forEach((v) => { if (Math.abs(v - y) < Math.abs(best - y)) best = v; });
-    if (Math.abs(best - y) < 4 || Math.abs(best - y) > innerHeight * 1.6) return; // уже на месте или далеко — не тянем
-    const from = y, t0 = performance.now(), dur = Math.min(900, 350 + Math.abs(best - y) * 0.6); snapping = true;
-    let last = from;
-    const step = (now) => {
-      if (Math.abs(scrollY - last) > 3) { snapping = false; return; } // страницу прокрутил кто-то другой (меню, ссылка) — не спорим
-      const k = Math.min(1, (now - t0) / dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-      last = Math.round(from + (best - from) * e); scrollTo({ top: last, behavior: 'instant' }); last = scrollY;
-      if (k < 1 && snapping) snapRaf = requestAnimationFrame(step); else snapping = false;
-    };
-    snapRaf = requestAnimationFrame(step);
-  }, 220);
+const onScroll = () => { target = progress(); };
+// Плавная прокрутка (spec v0.14): колесо мыши и тачпад не дёргают страницу шагами, а ведут её мягко к цели.
+// Примагничивания к сценам нет. Касания на телефоне, клавиши и полоса прокрутки работают как обычно.
+// Колесо внутри листа, меню или любой прокручиваемой области — родная прокрутка этой области.
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
+let wheelTo = null, wheelAt = 0, wheelRaf = 0, wheelPos = 0;
+function scrollableInside(el) {
+  for (; el && el !== document.body && el !== document.documentElement; el = el.parentElement) {
+    if (el.scrollHeight > el.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(el).overflowY)) return true;
+  }
+  return false;
 }
-['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach((ev) => addEventListener(ev, stopSnap, { passive: true }));
+const stopWheel = () => { cancelAnimationFrame(wheelRaf); wheelRaf = 0; wheelTo = null; };
+function onWheel(e) {
+  if (e.ctrlKey || calm.matches || document.querySelector('[data-world-view]') || document.querySelector(':popover-open') || scrollableInside(e.target)) { stopWheel(); return; }
+  e.preventDefault();
+  const dy = e.deltaY * (e.deltaMode === 1 ? 32 : e.deltaMode === 2 ? innerHeight : 1);
+  const max = document.documentElement.scrollHeight - innerHeight;
+  if (wheelTo === null) wheelPos = scrollY;
+  wheelTo = Math.max(0, Math.min(max, (wheelTo ?? scrollY) + dy));
+  if (!wheelRaf) { wheelAt = performance.now(); wheelRaf = requestAnimationFrame(wheelStep); }
+}
+function wheelStep() {
+  const now = performance.now(); // своё время: метка кадра бывает раньше события колеса
+  if (wheelTo === null) { wheelRaf = 0; return; }
+  if (Math.abs(scrollY - Math.round(wheelPos)) > 2) { stopWheel(); return; } // страницу прокрутил кто-то другой (меню, клавиши) — не спорим
+  const dt = Math.max(0, Math.min(0.1, (now - wheelAt) / 1000)); wheelAt = now;
+  wheelPos += (wheelTo - wheelPos) * (1 - Math.exp(-dt * 7));
+  if (Math.abs(wheelTo - wheelPos) < 0.5) wheelPos = wheelTo;
+  scrollTo({ top: Math.round(wheelPos), behavior: 'instant' });
+  if (wheelPos === wheelTo) { wheelRaf = 0; wheelTo = null; return; }
+  wheelRaf = requestAnimationFrame(wheelStep);
+}
+addEventListener('wheel', onWheel, { passive: false });
 window.__snap = () => { target = progress(); cur = target; first = true; ready = 1; return target; }; // для съёмки постеров: без плавного появления
 addEventListener('scroll', onScroll, { passive: true });
 // Попап закрылся — браузер возвращает фокус на кнопку-табличку, а она висит над 3D (position: fixed).
@@ -271,12 +271,12 @@ const ro = new ResizeObserver(() => { measure(); onScroll(); }); ro.observe(docu
 const verse = document.getElementById('verse');
 const bubble = document.getElementById('bubble');
 let bubbleAnchor = null, bubbleUntil = 0;
-function say(text, anchor) {
+function say(text, anchor, desc = false) {
   if (!text || !bubble) return;
-  // вторая строка — цитата из книги, курсивом (spec v0.12)
+  // вторая строка — цитата из книги, курсивом (spec v0.12), или описание героя прямым шрифтом (spec v0.15)
   const [main, quote] = String(text).split('\n');
   const b = document.createElement('b'); b.textContent = main; bubble.replaceChildren(b);
-  if (quote) { const q = document.createElement('i'); q.textContent = quote; bubble.append(q); }
+  if (quote) { const q = document.createElement(desc ? 'span' : 'i'); q.textContent = quote; bubble.append(q); }
   bubble.classList.add('on'); bubbleAnchor = anchor; bubbleUntil = performance.now() + (quote ? 5200 : 2600);
 }
 function lily(force) {
@@ -286,9 +286,16 @@ function lily(force) {
   const inline = document.getElementById('verseInline'); if (inline) inline.textContent = line; // телефон: строка в виджете
   document.getElementById('lilyBtn')?.setAttribute('aria-pressed', String(open));
 }
+// герой: бабл с именем и описанием над фигуркой (spec v0.15 — вместо попапа); текст берём из HTML страницы
+function heroSay(id) {
+  const tag = document.querySelector(`[data-hero="${id}"]`), d = document.getElementById(`hero-${id}`);
+  const about = d?.textContent.split(/\s—\s/).slice(1).join(" — ") ?? ""; // «Имя — описание»: имя уже в первой строке
+  if (tag && d) say(`${tag.textContent}\n${about.charAt(0).toUpperCase()}${about.slice(1)}`, ANCH[id], true);
+}
 const onClick = (e) => {
-  const t = e.target.closest('[data-dub],[data-smell],#lilyBtn'); if (!t) return;
+  const t = e.target.closest('[data-dub],[data-smell],[data-hero],#lilyBtn'); if (!t) return;
   if (t.id === 'lilyBtn') lily();
+  else if (t.dataset.hero) { let f = ANCH[t.dataset.hero]; while (f && !f.userData.pose) f = f.parent; if (f) life.squish(f); fx('squish'); heroSay(t.dataset.hero); }
   else if (t.dataset.dub) say(P.dub.press(t.dataset.dub), P.dub.anchorOf(t.dataset.dub));
   else if (t.dataset.smell) say(P.fan.press(t.dataset.smell), ANCH[`fan.act.${t.dataset.smell}`] || P.fan.anchorOf(t.dataset.smell)); // подпись — над самим предметом
 };
@@ -310,7 +317,7 @@ function flyTo(k) {
   if (!view) { document.getElementById(k === 'home' ? 'home' : `planet-${k}`)?.scrollIntoView({ behavior: 'smooth' }); return; }
   nav(k === 'home' ? '/about/' : `/books/${slugs[k]}/`);
 }
-// фигурка героя → его карточка (тот же попап, что у ярлыка)
+// фигурка героя → бабл героя (как у ярлыка)
 const heroOf = new Map(); Object.entries(ANCH).forEach(([id, a]) => { if (!id.includes('.hero.')) return; let f = a; while (f && !f.userData.pose) f = f.parent; if (f) heroOf.set(f, id); });
 const figOf = (o) => { for (let x = o; x; x = x.parent) if (x.userData.pose) return x; return null; };
 canvas.addEventListener('click', (e) => {
@@ -321,7 +328,7 @@ canvas.addEventListener('click', (e) => {
     if (k !== curZone) { flyTo(k); return; }
     // своя планета: герой — карточка; предмет — «мнётся»; земля и вода — рябь (spec v0.12, дизайнер)
     const fig = figOf(obj);
-    if (fig) { life.squish(fig); fx('squish'); const id = heroOf.get(fig); if (id) document.getElementById(`hero-${id}`)?.showPopover(); return; }
+    if (fig) { life.squish(fig); fx('squish'); const id = heroOf.get(fig); if (id) heroSay(id); return; }
     if (point) { life.ripple(P[k].island, point); fx('plop'); }
     let top = obj; while (top.parent && top.parent !== P[k].island) top = top.parent;
     if (top !== P[k].island && top.name !== 'baked' && obj.name !== 'baked') { life.squish(top); fx('squish'); }
@@ -397,10 +404,15 @@ function panelOffset() {
 // ---------- цикл ----------
 const clock = new THREE.Clock();
 function local(p, a, b) { return THREE.MathUtils.clamp((p - a) / (b - a), 0, 1); }
-let curZone = '';
+let curZone = '', tickT = null;
+// курсор для параллакса: −1…1 от центра экрана; только мышь, на касаниях камера не качается
+const mouse = { x: 0, y: 0 }, par = { x: 0, y: 0 }, UP = V(0, 1, 0), parOff = new THREE.Vector3(), parAxis = new THREE.Vector3();
+const onMouse = (e) => { if (e.pointerType !== 'mouse' || document.querySelector('[data-world-view]')) { mouse.x = mouse.y = 0; return; } mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = (e.clientY / innerHeight) * 2 - 1; };
+const onLeave = () => { mouse.x = mouse.y = 0; };
+addEventListener('pointermove', onMouse, { passive: true }); document.documentElement.addEventListener('mouseleave', onLeave);
 resize();
 function tick() {
-  const t = clock.getElapsedTime();
+  const t = clock.getElapsedTime(), dtc = Math.min(0.1, t - (tickT ?? t)); tickT = t;
   const viewEl = document.querySelector('[data-world-view]');
   const view = viewEl && VIEWS[viewEl.dataset.worldView];
   let cp, lp, p;
@@ -408,7 +420,7 @@ function tick() {
   const frozen = !!view && homeP !== null;
   if (frozen) { p = homeP; [cp, lp] = camAt(p); }
   else if (view) { cp = view[0](); lp = view[1](); p = view[2]; }
-  else { cur += (target - cur) * 0.07; p = cur; [cp, lp] = camAt(p); }
+  else { cur += (target - cur) * (1 - Math.exp(-dtc * 4.3)); p = cur; [cp, lp] = camAt(p); } // мягкое следование камеры, одинаковое при любой частоте кадров
   // закрыли страницу: главная снова в DOM — возвращаем ровно ту прокрутку, что была до открытия (без скачка камеры)
   if (wasView && !view) {
     measure();
@@ -422,7 +434,15 @@ function tick() {
   if (innerWidth < innerHeight && !view) { lp.y -= 2.2; cp.lerp(lp, 0.12); }
   const k = first ? 1 : view ? 0.045 : 0.3; first = false;
   camPos.lerp(cp, k); camLook.lerp(lp, k); skyP += (p - skyP) * (view ? 0.045 : 1);
-  camera.position.copy(camPos); camera.lookAt(camLook);
+  camera.position.copy(camPos);
+  // параллакс от курсора (spec v0.15): камера чуть облетает точку взгляда — ближние предметы смещаются сильнее дальних
+  const pk = 1 - Math.exp(-dtc * 3); par.x += (mouse.x - par.x) * pk; par.y += (mouse.y - par.y) * pk;
+  if (!reduce && !view && (par.x || par.y)) {
+    parOff.subVectors(camPos, camLook).applyAxisAngle(UP, -par.x * 0.06);
+    parAxis.crossVectors(parOff, UP).normalize(); parOff.applyAxisAngle(parAxis, -par.y * 0.035);
+    camera.position.addVectors(camLook, parOff);
+  }
+  camera.lookAt(camLook);
   panelOffset();
 
   // небо и свет
@@ -466,7 +486,9 @@ function tick() {
   life.update(t, night);
   space.update(t);
   setScene(view ? (curZone || 'home') : zone); // фон сцены: свой у каждой планеты (spec v0.12)
-  const lit = P.asf.stepsLit.n ?? 0; if (lit !== lastLit) { if (lit > lastLit) xylo(lit, 0.11); lastLit = lit; } // поющая лестница
+  // поющая лестница (spec v0.15): вверх — гамма вверх, вниз — та же гамма в обратном порядке; по ступени за кадр, без пропусков
+  const lit = P.asf.stepsLit.n ?? 0;
+  if (lit > lastLit) { lastLit++; xylo(lastLit, 0.11); } else if (lit < lastLit) { xylo(lastLit, 0.11); lastLit--; }
   if (slow) {
     figs.forEach((f) => { f.getWorldPosition(figW); f.visible = figW.distanceTo(camPos) < 42; });
     // детализация: отдельная мелочь, которая на экране меньше ~6 px, уходит на слой 1 (не рисуется)
@@ -486,8 +508,13 @@ function tick() {
 
   placeTags();
   if (bubbleAnchor && bubble) {
+    // бабл над предметом; не влезает сверху (камера близко) — под ярлыком; по бокам не выходит за экран
+    const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
     bubbleAnchor.getWorldPosition(v); v.y += 1.1; v.project(camera);
-    bubble.style.transform = `translate(${(v.x * 0.5 + 0.5) * innerWidth}px, ${(-v.y * 0.5 + 0.5) * innerHeight}px) translate(-50%, -100%)`;
+    let bx = (v.x * 0.5 + 0.5) * innerWidth, by = (-v.y * 0.5 + 0.5) * innerHeight - bh;
+    if (by < 12) { bubbleAnchor.getWorldPosition(v); v.project(camera); by = (-v.y * 0.5 + 0.5) * innerHeight + 34; }
+    bx = Math.min(innerWidth - bw / 2 - 8, Math.max(bw / 2 + 8, bx));
+    bubble.style.transform = `translate(${bx}px, ${by}px) translate(-50%, 0)`;
     if (performance.now() > bubbleUntil) { bubble.classList.remove('on'); bubbleAnchor = null; }
   }
 
@@ -510,7 +537,7 @@ lily(0);
 tick();
 return () => {
   cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', onVis);
-  removeEventListener('scroll', onScroll); stopSnap(); ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach((ev) => removeEventListener(ev, stopSnap)); removeEventListener('resize', resize); ro.disconnect();
+  removeEventListener('scroll', onScroll); stopWheel(); removeEventListener('wheel', onWheel); removeEventListener('pointermove', onMouse); document.documentElement.removeEventListener('mouseleave', onLeave); removeEventListener('resize', resize); ro.disconnect();
   document.removeEventListener('click', onClick); document.removeEventListener('toggle', onPopToggle, true); document.removeEventListener('beforetoggle', onPopBefore, true); document.removeEventListener('click', onPopClick, true);
   root.classList.remove('night'); delete root.dataset.zone; delete root.dataset.planet; delete root.dataset.say;
   painter.dispose();
