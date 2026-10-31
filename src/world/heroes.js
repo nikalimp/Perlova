@@ -11,6 +11,10 @@ export function addHeroes(P) {
   const anchors = {}, figs = [], movers = [];
   const hero = (k, i, fig, parent, x, y, z, ry) => { place(parent ?? P[k].island, fig, x, y, z, ry); figs.push(fig); anchors[`${k}.hero.${i}`] = fig.userData.anchor; return fig; };
   // таблички книг на планетах убраны (spec v0.6): описание книг — на полке в Доме автора
+  // узнаваемые детали героев (spec v0.13, арт-директор) — только то, что есть в книгах (specs/source/books)
+  const ballProp = () => { const g = new THREE.Group(); const b = sphere(0.12, clay(0xe9772a), 20, 14); g.add(b); const l = mesh(new THREE.TorusGeometry(0.121, 0.008, 6, 28), clay(0x3a2a22)); l.rotation.y = Math.PI / 2; g.add(l); g.position.set(0, -0.42, 0.06); return g; }; // Яся и баскетбол
+  const teddyProp = () => { const g = new THREE.Group(), fur = clay(0x9a6b45); const b = sphere(0.09, fur, 14, 10); b.scale.y = 1.15; g.add(b); const hd = sphere(0.065, fur, 14, 10); hd.position.y = 0.12; g.add(hd);
+    [-1, 1].forEach((s) => { const e = sphere(0.025, fur, 8, 6); e.position.set(s * 0.045, 0.17, 0); g.add(e); }); g.position.set(0, -0.4, 0.08); return g; }; // плюшевый медведь Элли
   const tag = (k, i, obj, y = 0.9) => { const a = new THREE.Object3D(); a.position.y = y; obj.add(a); anchors[`${k}.hero.${i}`] = a; };
 
   // ---------- Кувшинки: принцесса Ирис, русалочка и ветер-эльф, звёздный кит ----------
@@ -55,9 +59,9 @@ export function addHeroes(P) {
   // ---------- Дуб, орех и мочало: Яся (7 лет), Котя, Соня и Стеша, Рома ----------
   {
     const isl = P.dub.island;
-    hero('dub', 0, figure({ style: 'pigtails', hair: BLONDE, top: 0xf07d24, bottom: 0x2f56a6, wave: true, scale: 0.62 }), null, 0.5, 0.18, 2.1, 0.2);
+    hero('dub', 0, figure({ style: 'pigtails', hair: BLONDE, top: 0xf07d24, bottom: 0x2f56a6, wave: true, scale: 0.62, prop: ballProp }), null, 0.5, 0.18, 2.1, 0.2);
     tag('dub', 1, P.dub.kotya, 0.85);
-    const sonya = hero('dub', 2, figure({ style: 'bob', hair: 0x3a2a22, top: 0xf49ac1, dress: true, scale: 0.6 }), null, -1.3, 0.1, 0.1, 0.5);
+    const sonya = hero('dub', 2, figure({ style: 'bob', hair: 0x3a2a22, top: 0xf49ac1, dress: true, bows: 0xffffff, scale: 0.6 }), null, -1.3, 0.1, 0.1, 0.5);
     figs.push(place(isl, figure({ style: 'long', hair: 0xb0552e, top: 0x7bd389, dress: true, scale: 0.6, wave: true }), -0.7, 0.1, 0.45, -0.2));
     hero('dub', 3, figure({ style: 'short', hair: 0x5a3a2c, top: 0x3b5f9e, bottom: 0x34405e, hop: true, scale: 0.66 }), null, 2.5, 0.18, 0.9, -1.2);
     // двор: фонарь, кусты, скамейка, качели
@@ -106,7 +110,7 @@ export function addHeroes(P) {
   {
     const isl = P.asf.island;
     hero('asf', 0, figure({ style: 'short', hair: 0x2a2020, top: 0x6f767e, bottom: 0x34405e, scale: 0.86 }), null, 1.5, 0.1, 2.9, -0.4);
-    hero('asf', 1, figure({ style: 'long', hair: 0xc89a5a, top: 0x2f56a6, dress: true, wave: true, scale: 0.8 }), null, 0.8, 0.1, 2.6, 0.2);
+    hero('asf', 1, figure({ style: 'long', hair: 0xc89a5a, top: 0x2f56a6, dress: true, wave: true, scale: 0.8, prop: teddyProp }), null, 0.8, 0.1, 2.6, 0.2);
     hero('asf', 2, figure({ style: 'long', hair: 0xffffff, top: 0xf3f6fa, dress: true, crown: 0xc3ccd6, scale: 0.7 }), P.asf.city, -1.6, 0, 2.0, 0.4); // впереди башен: при подъёме её видно (замечание дизайнера)
   }
 

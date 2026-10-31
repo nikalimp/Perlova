@@ -1,5 +1,6 @@
 // @ts-nocheck — модули мира перенесены из прототипа (specs/prototypes/world-src), типизация не нужна
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 export { THREE };
 
@@ -176,4 +177,36 @@ export function contactShadow(R = 7) {
 // Подпись в 3D: HTML-пузырь над точкой (позиция считается в main.js)
 export function bubbleAnchor(obj, offsetY = 1) {
   const a = new THREE.Object3D(); a.position.y = offsetY; obj.add(a); return a;
+}
+
+// «Настоящий пластилин» (spec v0.13, замечание дизайнера: «сейчас выглядит как лоу-поли»).
+// После сборки мира каждая простая форма получает гладкую версию с теми же размерами:
+// больше граней у шаров, цилиндров, конусов, торов; кроны-многогранники → гладкие капли; коробки → скруглённые рёбра.
+// Если геометрию после создания двигали (translate), сдвиг переносится; если вращали или растягивали — форму не трогаем.
+export function smoothen(roots, lite = false) {
+  const S = lite ? 0.75 : 1, cache = new Map(), a = new THREE.Box3(), b = new THREE.Box3(), ca = new THREE.Vector3(), cb = new THREE.Vector3(), sa = new THREE.Vector3(), sb = new THREE.Vector3();
+  const up = (n, min) => Math.max(n ?? 0, Math.round(min * S));
+  const remake = (g) => {
+    const p = g.parameters; if (!p) return null;
+    switch (g.type) {
+      case 'SphereGeometry': return new THREE.SphereGeometry(p.radius, up(p.widthSegments, 36), up(p.heightSegments, 22), p.phiStart, p.phiLength, p.thetaStart, p.thetaLength);
+      case 'CylinderGeometry': return new THREE.CylinderGeometry(p.radiusTop, p.radiusBottom, p.height, up(p.radialSegments, 28), p.heightSegments, p.openEnded, p.thetaStart, p.thetaLength);
+      case 'ConeGeometry': return new THREE.ConeGeometry(p.radius, p.height, up(p.radialSegments, 28), p.heightSegments, p.openEnded, p.thetaStart, p.thetaLength);
+      case 'TorusGeometry': return new THREE.TorusGeometry(p.radius, p.tube, up(p.radialSegments, 16), up(p.tubularSegments, 56), p.arc);
+      case 'CapsuleGeometry': return new THREE.CapsuleGeometry(p.radius, p.length, up(p.capSegments, 8), up(p.radialSegments, 20));
+      case 'IcosahedronGeometry': case 'DodecahedronGeometry': case 'OctahedronGeometry': return new THREE.IcosahedronGeometry(p.radius, Math.max(p.detail ?? 0, lite ? 3 : 4));
+      case 'BoxGeometry': { const m = Math.min(p.width, p.height, p.depth); return m < 0.02 ? null : new RoundedBoxGeometry(p.width, p.height, p.depth, 3, m * 0.22); }
+      default: return null;
+    }
+  };
+  roots.forEach((r) => r.traverse((o) => {
+    if (!o.isMesh || o.userData.keepGeo) return;
+    const g = o.geometry; if (cache.has(g)) { const n = cache.get(g); if (n) o.geometry = n; return; }
+    const n = remake(g); if (!n) { cache.set(g, null); return; }
+    g.computeBoundingBox(); n.computeBoundingBox(); a.copy(g.boundingBox); b.copy(n.boundingBox);
+    a.getSize(sa); b.getSize(sb);
+    if (Math.abs(sa.x - sb.x) + Math.abs(sa.y - sb.y) + Math.abs(sa.z - sb.z) > 0.02 * (sa.x + sa.y + sa.z) + 1e-3) { n.dispose(); cache.set(g, null); return; } // вращали — не трогаем
+    a.getCenter(ca); b.getCenter(cb); if (ca.distanceToSquared(cb) > 1e-8) n.translate(ca.x - cb.x, ca.y - cb.y, ca.z - cb.z);
+    cache.set(g, n); o.geometry = n;
+  }));
 }

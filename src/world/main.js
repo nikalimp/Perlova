@@ -1,5 +1,5 @@
 // @ts-nocheck — мир-пространство на весь сайт (spec v0.3). Запускается компонентом World в layout и живёт между страницами.
-import { THREE, cloud } from './core.js';
+import { THREE, cloud, smoothen } from './core.js';
 import { buildKuvshinki } from './kuvshinki.js';
 import { buildDub } from './dub.js';
 import { buildFandango } from './fandango.js';
@@ -10,6 +10,7 @@ import { buildAuthor } from './author.js';
 import { createPainter } from './paint.js';
 import { addLife } from './life.js';
 import { bakeStatic } from './bake.js';
+import { addSpace } from './space.js';
 import { xylo, fx, setScene } from '../lib/sound';
 
 // Два режима камеры:
@@ -69,7 +70,8 @@ const at = (k, x, y, z) => V(...POS[k]).add(V(x, y, z));
 const atL = (k, x, y, z) => { P[k].root.updateMatrixWorld(); return P[k].root.localToWorld(V(x, y, z)); };
 const toW = (k, v) => v.clone().applyEuler(P[k].root.rotation).add(V(...POS[k]));
 const focus = (k) => toW(k, P[k].focus);
-const DIVE = { kuv: [2.7, 3.4, 6.7], dub: [4.2, 5.2, 9.5], fan: [3.4, 4.4, 8.2], home: [5.2, 7.6, 13.5] };
+// камера выше и смотрит сверху — мир читается как макет на столе (эффект миниатюры, spec v0.13)
+const DIVE = { kuv: [2.7, 4.6, 6.4], dub: [4.2, 6.8, 9.0], fan: [3.4, 5.8, 7.8], home: [5.2, 8.6, 13.0] };
 const dive = (k) => focus(k).add(V(...DIVE[k]).applyEuler(P[k].root.rotation));
 // вид страницы книги: между обзором планеты и «нырком» — видна вся планета с героями
 const wide = (k) => dive(k).lerp(at(k, 9, 11, 15), 0.45);
@@ -108,16 +110,20 @@ const STATIONS = [
   // приветствие: автор близко и по центру кадра, лицом к гостю (spec v0.6)
   { p: 0.00, say: 'intro', wave: true, onCloud: true, pos: () => { const c = V(10, 34, 64); return c.clone().add(V(40, 0, -30).sub(c).normalize().multiplyScalar(9)).add(V(0, -2.5, 0)); } },
   { p: 0.16, say: 'kuv', pos: local3('kuv', 1.7, 0.27, 0.1), planet: 'kuv' }, // край большого листа: твёрдо под ногами (луч сверху), над автором есть место для реплики
-  { p: 0.39, say: 'dub', pos: local3('dub', 4.2, 0.06, 1.2), planet: 'dub' }, // трава справа от площадки: не за щитом (проверено лучом сверху)
-  { p: 0.61, say: 'fan', pos: local3('fan', 4.2, 0.06, -1.0), planet: 'fan' }, // лужайка справа: не в речке и не за скамейкой (проверено лучом сверху)
+  { p: 0.39, say: 'dub', pos: local3('dub', 3.8, 0.06, 0.0), planet: 'dub' }, // трава справа от площадки, дальше от камеры (v0.13: камера выше): не за щитом (проверено лучом сверху)
+  { p: 0.61, say: 'fan', pos: local3('fan', 3.6, 0.06, -1.6), planet: 'fan' }, // лужайка справа, ближе к центру кадра (v0.13): не в речке и не за скамейкой (проверено лучом сверху)
   { p: 0.80, say: 'asf', pos: local3('asf', 2.8, 0.06, 0.4), planet: 'asf' }, // дальше от камеры: целиком в кадре, над головой нет ступеней (луч сверху)
   { p: 1.00, say: 'home', sit: true, pos: seatW, seatQuat: (q) => P.home.seat.getWorldQuaternion(q) },
 ];
 const author = buildAuthor(scene, STATIONS);
 ANCH.author = author.anchor;
+P.home.setCovers(opts.covers || []); // книги автора на полке (spec v0.13)
 const life = addLife(scene);
+const space = addSpace(scene, Object.values(POS)); // бумажные звёзды и далёкие луны (spec v0.13)
 // облегчение (spec v0.8): неподвижные предметы склеиваются; подвижные находим, прогнав анимации вхолостую
 const SIM = [0.31, 1.73, 3.37, 6.11];
+// гладкие формы до склейки (spec v0.13): иначе склеятся старые гранёные
+smoothen([...Object.values(P).map((p) => p.root), ...clouds, author.root], mobile);
 const TUNE = location.search.includes('tune'); // панель настройки: склейку выключаем, иначе предметы не сдвинуть
 const bakeInfo = TUNE ? { rest: [] } : bakeStatic([...Object.values(P).flatMap((p) => p.root.children), ...clouds, author.fig], Object.values(P).flatMap((p) => p.hit || []), (i) => {
   const t = i < 0 ? 0 : SIM[i], k = i < 0 ? 0 : i % 2;
@@ -192,7 +198,10 @@ function progress() {
   return anchors[anchors.length - 1][1];
 }
 let target = 0, cur = 0;
-let fpsAt = 0, lastLit = 0; const fpsEl = location.search.includes('fps') ? Object.assign(document.body.appendChild(document.createElement('div')), { style: 'position:fixed;left:10px;top:10px;z-index:99;font:12px/1 monospace;background:#000a;color:#fff;padding:6px 8px;border-radius:6px;pointer-events:none' }) : null;
+let fpsAt = 0, lastLit = 0;
+// цветовая «погода» планет (spec v0.13, арт-директор): утро у пруда, полдень во дворе, золотой вечер в деревне, синяя ночь, тёплая лампа
+const TINT = { kuv: new THREE.Color(0.97, 1.02, 1.04), dub: new THREE.Color(1.03, 1.01, 0.96), fan: new THREE.Color(1.07, 1.0, 0.88), asf: new THREE.Color(0.92, 0.96, 1.08), home: new THREE.Color(1.05, 0.97, 1.0) };
+const gradeTint = new THREE.Color(1, 1, 1), hazeC = new THREE.Color(); const fpsEl = location.search.includes('fps') ? Object.assign(document.body.appendChild(document.createElement('div')), { style: 'position:fixed;left:10px;top:10px;z-index:99;font:12px/1 monospace;background:#000a;color:#fff;padding:6px 8px;border-radius:6px;pointer-events:none' }) : null;
 let homeP = null, homeY = null, backUntil = 0; // где была главная, когда открыли страницу (spec v0.8)
 const camPos = V(10, 60, 90), camLook = V(40, 0, -30); let skyP = 0, first = true;
 let xyStep = -1, xyAt = 0;
@@ -307,6 +316,7 @@ const figOf = (o) => { for (let x = o; x; x = x.parent) if (x.userData.pose) ret
 canvas.addEventListener('click', (e) => {
   const h = hitTest(e); if (!h) return;
   const [kind, k, obj, , point] = h;
+  if (obj.userData.slug) { fx('paper'); nav(`/books/${obj.userData.slug}/`); return; } // книга на полке → её страница
   if (kind === 'planet') {
     if (k !== curZone) { flyTo(k); return; }
     // своя планета: герой — карточка; предмет — «мнётся»; земля и вода — рябь (spec v0.12, дизайнер)
@@ -323,7 +333,7 @@ canvas.addEventListener('click', (e) => {
   else { const id = P[k].pick(obj); if (id) say(P[k].press(id), ANCH[`${k}.act.${id}`] || P[k].anchorOf(id)); }
 });
 let lastMove = 0;
-canvas.addEventListener('pointermove', (e) => { const n = performance.now(); if (n - lastMove < 120) return; lastMove = n; const h = hitTest(e); canvas.style.cursor = h && (h[0] === 'act' || h[1] !== curZone) ? 'pointer' : ''; });
+canvas.addEventListener('pointermove', (e) => { const n = performance.now(); if (n - lastMove < 120) return; lastMove = n; const h = hitTest(e); canvas.style.cursor = h && (h[0] === 'act' || h[1] !== curZone || h[2].userData.slug) ? 'pointer' : ''; });
 
 // ---------- таблички над 3D ----------
 let tags = [], sizes = new Map(), tagFrame = 0;
@@ -408,7 +418,8 @@ function tick() {
   if (!view && performance.now() < backUntil) { if (Math.abs(scrollY - homeY) > 2) scrollTo({ top: homeY, behavior: 'instant' }); target = cur = homeP; }
   else if (!view) { homeP = cur; homeY = scrollY; }
   wasView = !!view;
-  if (innerWidth < innerHeight && !view) lp.y -= 2.2;
+  // телефон (вертикальный экран, spec v0.13): камера ближе, взгляд ниже — внизу экрана реплика, мир виден над ней
+  if (innerWidth < innerHeight && !view) { lp.y -= 2.2; cp.lerp(lp, 0.12); }
   const k = first ? 1 : view ? 0.045 : 0.3; first = false;
   camPos.lerp(cp, k); camLook.lerp(lp, k); skyP += (p - skyP) * (view ? 0.045 : 1);
   camera.position.copy(camPos); camera.lookAt(camLook);
@@ -453,6 +464,7 @@ function tick() {
   if (upd('home')) P.home.update(t, reduce, night);
   heroes.update(t, reduce);
   life.update(t, night);
+  space.update(t);
   setScene(view ? (curZone || 'home') : zone); // фон сцены: свой у каждой планеты (spec v0.12)
   const lit = P.asf.stepsLit.n ?? 0; if (lit !== lastLit) { if (lit > lastLit) xylo(lit, 0.11); lastLit = lit; } // поющая лестница
   if (slow) {
@@ -485,7 +497,9 @@ function tick() {
   // ?fps в адресе — счётчик кадров в углу: проверить скорость на своём устройстве
   if (fpsEl && now - fpsAt > 500) { fpsAt = now; fpsEl.textContent = `${Math.round(1000 / frameMs)} fps · ${frameMs.toFixed(1)} мс · ×${pr.toFixed(2)}`; }
   if (++perfN > 90) { perfN = 0; if (frameMs > 21 && pr > 0.8) { pr = Math.max(0.75, pr - 0.25); renderer.setPixelRatio(pr); resize(); } }
-  painter.render(scene, camera, night, sayNow ? camPos.distanceTo(author.root.position) : camPos.distanceTo(camLook));
+  // палитра планеты — плавно к цвету текущей зоны; дымка — цвет тумана в экранных цветах
+  gradeTint.lerp(TINT[curZone] || TINT.kuv, 0.04); hazeC.copy(scene.fog.color).convertLinearToSRGB();
+  painter.render(scene, camera, night, sayNow ? camPos.distanceTo(author.root.position) : camPos.distanceTo(camLook), gradeTint, hazeC);
   if (++frames === 3) opts.onReady?.(); // первые кадры готовы — прелоадер можно снять
   raf = document.hidden ? 0 : requestAnimationFrame(tick); // вкладка скрыта — цикл стоит
 }

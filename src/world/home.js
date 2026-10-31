@@ -58,10 +58,19 @@ export function buildHome() {
     let x = -0.8;
     for (let i = 0; i < 9 && x < 0.75; i++) {
       const w = 0.12 + ((i + row) % 3) * 0.03, h = 0.5 + ((i * 7 + row) % 4) * 0.05;
-      const c = row === 1 && i < 6 ? SPINES[i] : [0xe9dcc7, 0xc9b7c4, 0x9cc77a, 0xf6d35b][(i + row) % 4];
+      if (row === 1) break; // средняя полка — книги автора обложками к зрителю (ниже)
+      const c = [0xe9dcc7, 0xc9b7c4, 0x9cc77a, 0xf6d35b][(i + row) % 4];
       const b = mesh(rb(w, h, 0.36, 0.015), clay(c)); b.position.set(x + w / 2, 0.14 + row * 0.75 + h / 2, 0.02); shelf.add(b); x += w + 0.02;
     }
   }
+  // Средняя полка (spec v0.13, арт-директор): шесть книг автора обложками к зрителю, клик — страница книги.
+  // Обложки приходят из World (setCovers): пути из src/content/books.ts, файлы в public/books.
+  const shelfBooks = SPINES.map((c, i) => {
+    const paper = clay(0xf6efe2), side = clay(c), front = new THREE.MeshStandardMaterial({ color: c, roughness: 0.6 });
+    const b = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.4, 0.04), [side, side, paper, paper, front, side]);
+    b.castShadow = true; b.position.set(-0.73 + i * 0.29, 0.92 + 0.2, 0.05); b.rotation.x = -0.1; b.userData.keepGeo = true;
+    shelf.add(b); return b;
+  });
   put(shelf, -3.0, 0.1, -1.4, 0.55);
   anchor('books', shelf, 2.9);
 
@@ -114,6 +123,15 @@ export function buildHome() {
     focus: new THREE.Vector3(0.2, 0.8, -0.4),
     desk: new THREE.Vector3(0.6, 1.1, -0.8),
     shelf: new THREE.Vector3(-3.0, 1.3, -1.4),
+    shelfBooks,
+    // обложки книг на полку: list — [{ slug, cover }] в порядке книг сайта
+    setCovers(list) {
+      const loader = new THREE.TextureLoader();
+      list.slice(0, shelfBooks.length).forEach(({ slug, cover }, i) => {
+        const b = shelfBooks[i]; b.userData.slug = slug;
+        if (cover) loader.load(cover, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; const m = b.material[4]; m.map = t; m.color.set(0xffffff); m.needsUpdate = true; });
+      });
+    },
     update(t, reduce, night) {
       lampLight.intensity = 0.6 + night * 5;
       bulb.material.emissiveIntensity = 1 + night * 2.5;
