@@ -4,8 +4,9 @@
 import { THREE, clay, sphere } from './core.js';
 import { figure } from './figures.js';
 
-// Внешность — нейтральная, фото на сайте нет (decisions.md). ❓ Сверить с автором: причёска и цвет одежды (05-tasks, вопрос A1).
-const LOOK = { style: 'bun', hair: 0x5a3a2c, top: 0x1f6f69, dress: true, shoes: 0x3a2a2c, scale: 0.95 };
+// Внешность — по фото автора, которое прислал Ник 2026-10-31 (фото на сайте не публикуется, decisions.md):
+// волнистые волосы до плеч медового оттенка со светлыми прядями, чёлка набок, оливковая одежда, золотая цепочка с кулоном.
+const LOOK = { style: 'wavy', hair: 0xa8774c, hair2: 0xdcb985, skin: 0xf6d6c4, eye: 0x3e5370, top: 0x7a8550, dress: true, shoes: 0x4a3a2c, necklace: 0xd9b54a, scale: 0.95 };
 const W = 0.035; // полуокно посадки на станции (в долях прогресса скролла)
 
 function makeCloud() {
@@ -47,6 +48,7 @@ export function buildAuthor(scene, stations) {
         // у края окна посадки облачко приподнимается — взлёт и посадка мягкие
         const d = Math.abs(p - S.at.p); land = 1 - smooth(THREE.MathUtils.clamp((d - W * 0.5) / (W * 0.5), 0, 1));
         if (!sit && S.at.hover) land = 0.4;
+        if (S.at.onCloud) land = 0; // приветствие: стоит на облачке в воздухе
       }
       root.position.copy(tmp);
       if (!sit) root.position.y += (1 - land) * 0.6 + (reduce ? 0 : Math.sin(t * 1.6) * 0.06 * (1 - land * 0.7));

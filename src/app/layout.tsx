@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import "@fontsource-variable/golos-text/wght.css";
-import "@fontsource-variable/lora/wght.css";
-import "@fontsource-variable/lora/wght-italic.css";
 import "./globals.css";
 import { site } from "@/content/site";
 import { KeyNav } from "@/components/widgets";
@@ -36,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {site.darkTheme && <script dangerouslySetInnerHTML={{ __html: themeScript }} />}
         {site.metrikaId > 0 && <script dangerouslySetInnerHTML={{ __html: metrikaScript(site.metrikaId) }} />}
+        <link rel="preload" href="/fonts/caveat-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossOrigin="" />
         <script dangerouslySetInnerHTML={{ __html: preloadScript }} />
         <JsonLd data={graph(websiteSchema, personSchema)} />
       </head>

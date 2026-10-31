@@ -1,11 +1,10 @@
-// Прелоадер мира: облачко со знаком и мазок кистью, который «прорисовывается».
+// Прелоадер мира: облачко и имя автора от руки, под ним мазок, который «прорисовывается».
+// Знака-логотипа нет (решение Ника 2026-10-31): имя пишется рукописным шрифтом.
 // Видим только при html.world-loading (скрипт в layout); весь текст страницы — под ним, в HTML.
 export function Preloader() {
   return (
     <div className="preloader" aria-hidden="true">
-      <div className="preloader-cloud">
-        <img src="/brand/sign.svg" alt="" width={64} height={64} />
-      </div>
+      <div className="preloader-cloud" />
       <p className="preloader-name">Евгения Перлова</p>
       <p className="preloader-text">Раскрываем миры книг…</p>
       <svg className="preloader-stroke" viewBox="0 0 220 24" width="220" height="24">

@@ -52,12 +52,13 @@ await at(og, "0");
 await og.evaluate(() => {
   const d = document.createElement("div");
   d.innerHTML =
-    '<div style="font:600 64px/1.05 \'Lora Variable\',Georgia,serif;color:#3A2A3F">Евгения Перлова</div>' +
+    '<div style="font:700 78px/1.0 \'Caveat Hand\',cursive;color:#3A2A3F">Евгения Перлова</div>' +
     '<div style="margin-top:14px;font:400 24px \'Golos Text Variable\',sans-serif;color:#6D5A6E">Детский писатель, поэт и переводчик · perlova.nikalimp.ru</div>';
   Object.assign(d.style, { position: "fixed", left: "56px", bottom: "56px", zIndex: 99, background: "rgba(255,250,244,.88)", padding: "28px 34px", borderRadius: "24px" });
   document.body.appendChild(d);
 });
-await og.waitForTimeout(500);
+await og.evaluate(() => document.fonts.ready);
+await og.waitForTimeout(1500);
 await og.screenshot({ path: "public/og.png", timeout: 180000 });
 console.log("og");
 await browser.close();
