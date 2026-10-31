@@ -409,7 +409,7 @@ html[data-say="home"] .say[data-say="home"].on { visibility: visible; opacity: 1
 @keyframes panel-in { from { opacity: 0; scale: 0.96; } }
 
 /* музыка (spec v0.10): круглая ▶ по центру первой реплики, звук вкл/выкл — слева внизу */
-.say-play-row { display: flex !important; justify-content: center; margin-top: 10px; }
+.say-play-row { display: flex !important; justify-content: center; margin-top: 26px; margin-bottom: 16px; }
 .say-play { width: 60px; height: 60px; border-radius: 999px; display: grid; place-items: center; background: var(--accent); color: var(--accent-foreground); box-shadow: 0 8px 20px oklch(0.544 0.187 344.5 / 35%); cursor: pointer; transition: transform .2s; }
 .say-play svg { width: 26px; height: 26px; fill: currentColor; }
 .say-play:not([aria-pressed="true"]) svg { margin-left: 3px; } /* оптически по центру треугольника */
@@ -453,6 +453,9 @@ html.has-world[data-zone="intro"]:not(.world-loading) .scroll-hint { opacity: .8
 /* подпись сюрприза: первая строка — что случилось, вторая — цитата из книги (spec v0.12) */
 .has-world .world-bubble { max-width: 320px; }
 .has-world .world-bubble b { display: block; font-style: normal; font-weight: 700; }
+.has-world .world-bubble span { display: block; margin-top: 4px; font-size: 17px; font-style: normal; }
+.hero-desc { margin: 4px 0 10px; font-size: 16px; }
+.has-world .hero-desc { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; margin: 0; }
 .has-world .world-bubble i { display: block; margin-top: 4px; font-size: 17px; color: var(--muted-foreground); }
 
 /* клики проходят сквозь слой страницы к 3D-миру (spec v0.12): раньше .world-page перехватывал клики по планетам и предметам.
