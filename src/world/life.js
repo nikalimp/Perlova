@@ -32,7 +32,7 @@ export function addLife(scene) {
         const a = tr * f.s + f.ph;
         f.g.position.set(f.base.x + Math.sin(a) * 0.22, f.base.y + Math.sin(a * 1.7) * 0.1, f.base.z + Math.sin(a * 0.8) * 0.16);
         const k = 0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(tr * 2.6 + f.ph * 3), 3); // мерцание
-        f.core.material.opacity = 0.5 + k * 0.5; f.glow.material.opacity = k * (0.65 + night * 0.35); f.glow.scale.setScalar(0.42 + k * 0.22);
+        f.core.material.opacity = 0.5 + k * 0.5; f.glow.material.opacity = k * (0.65 + night * 0.35); f.glow.scale.setScalar(0.7 + k * 0.45);
       });
       sway.forEach(({ o, ph, rz, rx }) => { o.rotation.z = rz + Math.sin(t * 1.3 + ph) * 0.035; o.rotation.x = rx + Math.sin(t * 0.9 + ph * 1.7) * 0.02; });
       dust.forEach((d) => d.update(t, night));
@@ -42,7 +42,7 @@ export function addLife(scene) {
     // светлячок рядом с интерактивным объектом; group — остров, pos — точка в мировых координатах
     fly(group, pos) {
       const g = new THREE.Group();
-      const core = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff6b0, transparent: true, toneMapped: false }));
+      const core = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff6b0, transparent: true, toneMapped: false }));
       const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: halo(), color: 0xfff0a0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
       g.add(core, glow);
       group.updateMatrixWorld(); const base = group.worldToLocal(pos.clone()); g.position.copy(base);

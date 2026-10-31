@@ -54,7 +54,7 @@ await og.evaluate(() => {
   d.innerHTML =
     '<div style="font:700 78px/1.0 \'Caveat Hand\',cursive;color:#3A2A3F">Евгения Перлова</div>' +
     '<div style="margin-top:14px;font:400 24px \'Golos Text Variable\',sans-serif;color:#6D5A6E">Детский писатель, поэт и переводчик · perlova.nikalimp.ru</div>';
-  Object.assign(d.style, { position: "fixed", left: "56px", bottom: "56px", zIndex: 99, background: "rgba(255,250,244,.88)", padding: "28px 34px", borderRadius: "24px" });
+  Object.assign(d.style, { position: "fixed", left: "56px", top: "48px", zIndex: 99, background: "rgba(255,250,244,.88)", padding: "28px 34px", borderRadius: "24px" });
   document.body.appendChild(d);
 });
 await og.evaluate(() => document.fonts.ready);

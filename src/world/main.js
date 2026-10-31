@@ -101,7 +101,7 @@ const local3 = (k, x, y, z) => () => atL(k, x, y, z);
 const seatW = () => { const v = new THREE.Vector3(); P.home.seat.getWorldPosition(v); return v; };
 const STATIONS = [
   // приветствие: автор близко и по центру кадра, лицом к гостю (spec v0.6)
-  { p: 0.00, say: 'intro', wave: true, onCloud: true, pos: () => { const c = V(10, 34, 64); return c.clone().add(V(40, 0, -30).sub(c).normalize().multiplyScalar(9)).add(V(0, -1.25, 0)); } },
+  { p: 0.00, say: 'intro', wave: true, onCloud: true, pos: () => { const c = V(10, 34, 64); return c.clone().add(V(40, 0, -30).sub(c).normalize().multiplyScalar(9)).add(V(0, -2.1, 0)); } },
   { p: 0.16, say: 'kuv', pos: local3('kuv', 2.2, 0.25, 0.6), planet: 'kuv' },
   { p: 0.39, say: 'dub', pos: local3('dub', 2.0, 0.18, -0.6), planet: 'dub' },
   { p: 0.61, say: 'fan', pos: local3('fan', 2.8, 0.12, 1.1), planet: 'fan' },
