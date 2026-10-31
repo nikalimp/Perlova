@@ -388,3 +388,7 @@ html[data-say="home"] .say[data-say="home"].on { visibility: visible; opacity: 1
 /* имена героев и таблички Дома автора — тоже от руки */
 .has-world .tag { font-family: var(--font-hand); font-size: 18px; font-weight: 600; }
 .sign b { font-family: var(--font-hand); }
+
+/* подсказки у сюрпризов — как имена героев, со звёздочкой (spec v0.7) */
+.tag-act::before { content: "✦"; width: auto; height: auto; background: none; color: var(--planet, var(--primary)); font-size: 13px; line-height: 1; }
+.home-signs .tag { --planet: var(--accent); }

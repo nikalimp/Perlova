@@ -20,12 +20,14 @@ const slugs = opts.slugs || {};
 const reduce = false; // при prefers-reduced-motion мир не запускается вовсе — показывается статичная страница
 const mobile = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobile, alpha: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.25 : 1.75));
+let pr = Math.min(devicePixelRatio, mobile ? 1.25 : 1.5); // качество кадра; снижается само, если кадры идут медленно
+renderer.setPixelRatio(pr);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false; // тени пересчитываются 12 раз в секунду вместе с покадровой анимацией
 
 const painter = createPainter(renderer, mobile);
 const scene = new THREE.Scene();
@@ -103,8 +105,8 @@ const STATIONS = [
   // приветствие: автор близко и по центру кадра, лицом к гостю (spec v0.6)
   { p: 0.00, say: 'intro', wave: true, onCloud: true, pos: () => { const c = V(10, 34, 64); return c.clone().add(V(40, 0, -30).sub(c).normalize().multiplyScalar(9)).add(V(0, -2.1, 0)); } },
   { p: 0.16, say: 'kuv', pos: local3('kuv', 2.2, 0.25, 0.6), planet: 'kuv' },
-  { p: 0.39, say: 'dub', pos: local3('dub', 2.0, 0.18, -0.6), planet: 'dub' },
-  { p: 0.61, say: 'fan', pos: local3('fan', 2.8, 0.12, 1.1), planet: 'fan' },
+  { p: 0.39, say: 'dub', pos: local3('dub', 4.2, 0.06, 1.2), planet: 'dub' }, // трава справа от площадки: не за щитом (проверено лучом сверху)
+  { p: 0.61, say: 'fan', pos: local3('fan', 4.2, 0.06, -1.0), planet: 'fan' }, // лужайка справа: не в речке и не за скамейкой (проверено лучом сверху)
   { p: 0.80, say: 'asf', pos: local3('asf', 2.4, 0.12, 2.1), planet: 'asf' },
   { p: 0.88, say: 'asf', pos: local3('asf', 2.4, 10.45, 0.2) },
   { p: 1.00, say: 'home', sit: true, pos: seatW, seatQuat: (q) => P.home.seat.getWorldQuaternion(q) },
@@ -112,20 +114,17 @@ const STATIONS = [
 const author = buildAuthor(scene, STATIONS);
 ANCH.author = author.anchor;
 const life = addLife(scene);
-// светлячки у всего, что можно нажать (spec v0.6): предметы-сюрпризы, герои с попапами, предметы Дома автора
+if (location.search.includes('debug')) window.__w = { P, scene, STATIONS, THREE }; // проверка перекрытий (scripts, Playwright)
+// подсказки у сюрпризов (spec v0.7): точка над каждым интерактивным объектом, к ней привязан ярлык из HTML (.tag-act)
 {
-  const box = new THREE.Box3(), c = new THREE.Vector3(), sz = new THREE.Vector3(), w = new THREE.Vector3();
-  const near = (k, o, dx = 0.35) => { o.updateWorldMatrix(true, true); box.setFromObject(o); box.getCenter(c); box.getSize(sz);
-    life.fly(P[k].island, V(c.x + Math.max(0.3, sz.x * 0.5) * (dx > 0 ? 1 : -1), box.max.y + 0.25, c.z + 0.2)); };
-  P.kuv.hit.slice(0, 1).forEach((o) => near('kuv', o));
-  P.dub.hit.forEach((o, i) => near('dub', o, i % 2 ? -1 : 1));
-  P.fan.hit.slice(0, 4).forEach((o, i) => near('fan', o, i % 2 ? -1 : 1));
-  if (P.fan.hit[4]) near('fan', P.fan.hit[4]);
-  const planetOf = (a) => a.split('.')[0];
-  Object.entries(ANCH).forEach(([id, a]) => {
-    if (!/\.hero\.|^home\.(books|about|reviews|faq|contacts)$/.test(id)) return;
-    a.getWorldPosition(w); life.fly(P[planetOf(id)].island, w.add(V(0.45, -0.25, 0.2)));
-  });
+  const box = new THREE.Box3(), top = new THREE.Vector3();
+  const tagOn = (id, o, dy = 0.3) => {
+    o.updateWorldMatrix(true, true); box.setFromObject(o); box.getCenter(top); top.y = box.max.y + dy;
+    const a = new THREE.Object3D(); o.add(a); a.position.copy(o.worldToLocal(top.clone())); ANCH[id] = a;
+  };
+  tagOn('kuv.act.lily', P.kuv.hit[0]);
+  ['oak', 'nut', 'sponge'].forEach((id) => tagOn(`dub.act.${id}`, P.dub.anchorOf(id)));
+  ['well', 'river', 'milk', 'stone', 'fan'].forEach((id) => tagOn(`fan.act.${id}`, P.fan.anchorOf(id), id === 'river' ? -0.2 : 0.3));
 }
 const dented = new Set(), dentW = new THREE.Vector3();
 
@@ -184,12 +183,21 @@ window.__snap = () => { target = progress(); cur = target; first = true; ready =
 addEventListener('scroll', onScroll, { passive: true });
 // Попап закрылся — браузер возвращает фокус на кнопку-табличку, а она висит над 3D (position: fixed).
 // Некоторые браузеры при этом прокручивают страницу в начало. Запоминаем скролл при открытии и возвращаем после закрытия.
-const popY = new WeakMap();
-const keepY = (y) => { const go = () => { if (Math.abs(scrollY - y) > 2) scrollTo({ top: y, behavior: 'instant' }); }; go(); requestAnimationFrame(go); setTimeout(go, 120); };
+// Защита в два слоя: 1) перед закрытием снимаем фокус внутри попапа — браузеру некуда «возвращать» фокус со скроллом;
+// фокус возвращаем на кнопку сами, без прокрутки; 2) ещё 0,9 с держим прежнюю позицию, если страница всё же уехала.
+const popY = new WeakMap(); let invoker = null;
+const onPopClick = (e) => { const b = e.target instanceof Element && e.target.closest('[popovertarget]'); if (b && !b.closest('[popover]')) invoker = b; };
+const keepY = (y) => { const until = performance.now() + 900; const go = () => { if (Math.abs(scrollY - y) > 2) scrollTo({ top: y, behavior: 'instant' }); if (performance.now() < until) requestAnimationFrame(go); }; go(); };
+const isPop = (el) => el instanceof HTMLElement && el.hasAttribute('popover');
+const onPopBefore = (e) => { if (isPop(e.target) && e.newState === 'closed' && e.target.contains(document.activeElement)) document.activeElement.blur(); };
 const onPopToggle = (e) => {
-  const el = e.target; if (!(el instanceof HTMLElement) || !el.hasAttribute('popover')) return;
-  if (e.newState === 'open') popY.set(el, scrollY); else if (popY.has(el)) keepY(popY.get(el));
+  const el = e.target; if (!isPop(el)) return;
+  if (e.newState === 'open') { popY.set(el, scrollY); return; }
+  if (popY.has(el)) keepY(popY.get(el));
+  if (invoker && invoker.isConnected) invoker.focus({ preventScroll: true });
 };
+document.addEventListener('click', onPopClick, true);
+document.addEventListener('beforetoggle', onPopBefore, true);
 document.addEventListener('toggle', onPopToggle, true);
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
@@ -254,8 +262,13 @@ let tags = [], sizes = new Map(), tagFrame = 0;
 const v = new THREE.Vector3(), cw = new THREE.Vector3();
 const clamp = THREE.MathUtils.clamp;
 function placeTags() {
-  if (tagFrame++ % 20 === 0) { tags = [...document.querySelectorAll('[data-anchor]')]; tags.forEach((el) => sizes.set(el, [el.offsetWidth, el.offsetHeight])); }
+  if (tagFrame++ % 20 === 0) {
+    // реплики автора — первыми: остальные ярлыки уступают им место
+    tags = [...document.querySelectorAll('[data-anchor]')].sort((x, y) => y.classList.contains('say') - x.classList.contains('say'));
+    tags.forEach((el) => sizes.set(el, [el.offsetWidth, el.offsetHeight]));
+  }
   camera.getWorldPosition(cw);
+  const placed = []; // занятые прямоугольники экрана: [лево, верх, право, низ]
   for (const el of tags) {
     const a = ANCH[el.dataset.anchor];
     let on = false;
@@ -263,14 +276,28 @@ function placeTags() {
       a.getWorldPosition(v);
       const d = v.distanceTo(cw);
       v.project(camera);
-      // табличка книги держится у края экрана, если столбик чуть за кадром; имена героев — только в кадре
+      // реплика держится у края экрана, если автор чуть за кадром; ярлыки — только в кадре
       const lim = el.classList.contains('sign') || el.classList.contains('say') ? 1.6 : 1.02;
       on = v.z < 1 && Math.abs(v.x) < lim && Math.abs(v.y) < lim && d < +(el.dataset.near || 30);
       if (on) {
         const [w, h] = sizes.get(el) || [0, 0];
         const x = clamp((v.x * 0.5 + 0.5) * innerWidth, w / 2 + 8, innerWidth - w / 2 - 8);
-        const y = clamp((-v.y * 0.5 + 0.5) * innerHeight, h + 70, innerHeight - 70);
-        el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`;
+        let y = clamp((-v.y * 0.5 + 0.5) * innerHeight, h + 70, innerHeight - 70);
+        const isSay = el.classList.contains('say');
+        if (isSay && innerWidth <= 640) { const r = el.getBoundingClientRect(); if (r.height && root.dataset.say === el.dataset.say) placed.push([r.left, r.top, r.right, r.bottom]); }
+        else {
+          // ярлык наезжает на уже поставленный (реплику или другой ярлык) — поднимаем его выше
+          const clash = (yy) => placed.find((q) => x - w / 2 < q[2] + 4 && x + w / 2 > q[0] - 4 && yy - h < q[3] + 4 && yy > q[1] - 4);
+          if (!isSay && clash(y)) {
+            // сначала пробуем выше, потом ниже того, на что наехали
+            let up = y; for (let i = 0; i < 6; i++) { const q = clash(up); if (!q) break; up = q[1] - 6; }
+            let dn = y; for (let i = 0; i < 6; i++) { const q = clash(dn); if (!q) break; dn = q[3] + h + 6; }
+            y = up - h > 60 && (y - up <= dn - y || dn > innerHeight - 20) ? up : dn;
+          }
+          const shown = !isSay || root.dataset.say === el.dataset.say; // реплика видна только у своей станции
+          if (isSay || (y - h > 60 && y < innerHeight - 20)) { if (shown) placed.push([x - w / 2, y - h, x + w / 2, y]); el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`; }
+          else on = false; // места нет — ярлык прячется, пока камера не повернётся
+        }
       }
     }
     if (el.classList.contains('on') !== on) el.classList.toggle('on', on);
@@ -300,6 +327,9 @@ function tick() {
   let cp, lp, p;
   if (view) { cp = view[0](); lp = view[1](); p = view[2]; }
   else { cur += (target - cur) * 0.07; p = cur; [cp, lp] = camAt(p); }
+  // закрыли панель страницы (/#home, /#planet-…): страница главной снова в DOM — встаём на якорь без анимации
+  if (wasView && !view && location.hash.length > 1) { const el = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (el) { el.scrollIntoView({ behavior: 'instant' }); target = progress(); } }
+  wasView = !!view;
   if (innerWidth < innerHeight && !view) lp.y -= 2.2;
   const k = first ? 1 : view ? 0.045 : 0.3; first = false;
   camPos.lerp(cp, k); camLook.lerp(lp, k); skyP += (p - skyP) * (view ? 0.045 : 1);
@@ -334,15 +364,20 @@ function tick() {
 
   if (curZone !== 'kuv' && P.kuv.open) lily(0);
   // покадровая анимация (spec v0.5): герои и предметы живут на 12 кадрах в секунду, камера и полёт автора — плавно
+  // Облегчение (spec v0.7): планеты, герои и тени обновляются только на новом «кадре» мультфильма, а не 60 раз в секунду
   const ts = Math.floor(t * 12) / 12;
-  P.kuv.update(ts, reduce);
-  P.dub.update(ts, reduce, view ? (curZone === 'dub' ? 1 : 0) : local(p, 0.3, 0.39));
-  P.fan.update(ts, reduce);
-  const stairs = view ? (curZone === 'asf' ? 0.5 : 0) : local(p, 0.74, 0.88);
-  P.asf.update(ts, reduce, stairs);
-  P.home.update(ts, reduce, night);
-  heroes.update(ts, reduce);
-  life.update(ts, night, t);
+  if (ts !== lastTs || curZone !== lastZone) {
+    lastTs = ts; lastZone = curZone;
+    P.kuv.update(ts, reduce);
+    P.dub.update(ts, reduce, view ? (curZone === 'dub' ? 1 : 0) : local(p, 0.3, 0.39));
+    P.fan.update(ts, reduce);
+    const stairs = view ? (curZone === 'asf' ? 0.5 : 0) : local(p, 0.74, 0.88);
+    P.asf.update(ts, reduce, stairs);
+    P.home.update(ts, reduce, night);
+    heroes.update(ts, reduce);
+    life.update(ts, night);
+    renderer.shadowMap.needsUpdate = true;
+  }
   const say = author.update(ts, p, camPos, reduce);
   // след облачка: вмятина в траве остаётся там, где автор приземлялся
   const la = author.landedAt;
@@ -363,11 +398,14 @@ function tick() {
   }
 
   // фокус объектива: на авторе, пока она говорит, иначе — на точке взгляда камеры
+  // само снижает чёткость кадра, если видеокарта не успевает (средний кадр дольше 24 мс)
+  const now = performance.now(); if (lastNow) frameMs += (Math.min(100, now - lastNow) - frameMs) * 0.05; lastNow = now;
+  if (++perfN > 90) { perfN = 0; if (frameMs > 24 && pr > 0.8) { pr = Math.max(0.75, pr - 0.25); renderer.setPixelRatio(pr); resize(); } }
   painter.render(scene, camera, night, sayNow ? camPos.distanceTo(author.root.position) : camPos.distanceTo(camLook));
   if (++frames === 3) opts.onReady?.(); // первые кадры готовы — прелоадер можно снять
   raf = document.hidden ? 0 : requestAnimationFrame(tick); // вкладка скрыта — цикл стоит
 }
-let raf = 0, ready = 0, lastRail = '', frames = 0;
+let raf = 0, ready = 0, lastRail = '', frames = 0, lastTs = -1, lastZone = '', lastNow = 0, frameMs = 16, perfN = 0, wasView = false;
 const onVis = () => { if (!document.hidden && !raf) raf = requestAnimationFrame(tick); };
 document.addEventListener('visibilitychange', onVis);
 lily(0);
@@ -375,7 +413,7 @@ tick();
 return () => {
   cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', onVis);
   removeEventListener('scroll', onScroll); removeEventListener('resize', resize); ro.disconnect();
-  document.removeEventListener('click', onClick); document.removeEventListener('toggle', onPopToggle, true);
+  document.removeEventListener('click', onClick); document.removeEventListener('toggle', onPopToggle, true); document.removeEventListener('beforetoggle', onPopBefore, true); document.removeEventListener('click', onPopClick, true);
   root.classList.remove('night'); delete root.dataset.zone; delete root.dataset.planet; delete root.dataset.say;
   painter.dispose();
   renderer.dispose();

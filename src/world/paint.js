@@ -81,8 +81,8 @@ const body = /* glsl */ `
   gl_FragColor = vec4(o * a * (1.0 - v), a + (1.0 - a) * v);`;
 
 export function createPainter(renderer, mobile) {
-  const defs = mobile ? '#define LITE\n#define AO_N 6\n#define DOF_N 8\n' : '#define AO_N 12\n#define DOF_N 16\n';
-  const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: mobile ? 0 : 4 });
+  const defs = mobile ? '#define LITE\n#define AO_N 6\n#define DOF_N 8\n' : '#define AO_N 8\n#define DOF_N 12\n';
+  const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: mobile ? 0 : 2 });
   rt.depthTexture = new THREE.DepthTexture(1, 1);
   rt.depthTexture.type = THREE.UnsignedIntType;
   const mat = new THREE.ShaderMaterial({

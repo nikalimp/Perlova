@@ -53,7 +53,7 @@ export function carved(color, kind) {
   const nm = heightToNormal(c, 5); nm.repeat.set(kind === 'rings' ? 1 : 12, 1);
   // в бороздках темнее — пыль и тень
   const ao = new THREE.CanvasTexture(c); ao.wrapS = ao.wrapT = THREE.RepeatWrapping; ao.repeat.copy(nm.repeat);
-  const m = new THREE.MeshPhysicalMaterial({ color, roughness: 0.85, metalness: 0, normalMap: nm, normalScale: new THREE.Vector2(1, 1), aoMap: ao, aoMapIntensity: 0.9, sheen: 0.5, sheenRoughness: 0.8, sheenColor: 0x555555 });
+  const m = new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0, normalMap: nm, normalScale: new THREE.Vector2(1, 1), aoMap: ao, aoMapIntensity: 0.9 });
   patchClay(m); carveCache[key] = m; return m;
 }
 // неровные «вылепленные» формы + тёплый подсвет по краю (свет проходит сквозь пластилин)
@@ -79,7 +79,7 @@ export const clay = (color, rough = 0.82, extra = {}) => {
   const key = color + '|' + rough + '|' + JSON.stringify(extra);
   if (!matCache.has(key)) matCache.set(key, extra.wireframe
     ? new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0, ...extra })
-    : patchClay(new THREE.MeshPhysicalMaterial({ color, roughness: Math.max(rough, 0.72), metalness: 0, normalMap: thumbs(), normalScale: new THREE.Vector2(1.1, 1.1), sheen: 0.45, sheenRoughness: 0.75, sheenColor: 0x4a4a4a, ...extra })));
+    : patchClay(new THREE.MeshStandardMaterial({ color, roughness: Math.max(rough, 0.72), metalness: 0, normalMap: thumbs(), normalScale: new THREE.Vector2(1.1, 1.1), ...extra })));
   return matCache.get(key);
 };
 export const glow = (color, intensity = 1.6) => clay(color, 0.5, { emissive: color, emissiveIntensity: intensity });

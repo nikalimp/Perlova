@@ -83,8 +83,7 @@ export function buildKuvshinki() {
   }
   for (let i = 0; i < 9; i++) { const a = 3.4 + (i / 9) * 1.6; const s = mesh(new THREE.IcosahedronGeometry(0.2 + (i % 3) * 0.08, 1), M.stone); s.position.set(Math.cos(a) * R * 0.88, 0.3, Math.sin(a) * R * 0.88); s.scale.y = 0.6; island.add(s); }
 
-  const flies = [];
-  for (let i = 0; i < 16; i++) { const f = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), M.star); f.userData = { a: i * 0.4, r: 1 + (i % 5) * 0.8, h: 0.6 + (i % 4) * 0.4, s: 0.2 + (i % 3) * 0.12 }; island.add(f); flies.push(f); }
+  // светлячков над прудом нет (решение Ника 2026-10-31): подсказки — ярлыки у предметов
 
   // звёздный кит
   const whale = new THREE.Group();
@@ -113,7 +112,6 @@ export function buildKuvshinki() {
       setLilyOpen(hero, hero.userData.open + (target - hero.userData.open) * 0.07);
       hero.rotation.y = t * 0.08;
       fBody.scale.y = 0.72 + Math.sin(t * 2.4) * 0.02;
-      flies.forEach((f) => { const d = f.userData; f.position.set(Math.cos(d.a + t * d.s) * d.r, d.h + Math.sin(t * 2 + d.a) * 0.15, Math.sin(d.a + t * d.s) * d.r); });
       const wa = t * 0.12;
       whale.position.set(Math.cos(wa) * 11, 6 + Math.sin(t * 0.7) * 0.5, Math.sin(wa) * 11 - 2);
       whale.rotation.y = -wa - Math.PI / 2; tail.rotation.z = Math.sin(t * 1.6) * 0.25;
