@@ -1,7 +1,7 @@
 // @ts-nocheck — герои и детали планет поверх сцен из прототипа (spec v0.3, задача S1)
 // Каждый якорь (anchor) — точка, над которой main.js держит HTML-табличку с тем же data-anchor.
 import { THREE, clay, glow, mesh, sphere, tree } from './core.js';
-import { figure, signPost, dragonfly } from './figures.js';
+import { figure, dragonfly } from './figures.js';
 
 const BLONDE = 0xf0d27a; // Яся одинакова в двух повестях: светлые хвостики (decisions.md), во второй повести старше и с венком
 
@@ -10,7 +10,7 @@ function place(parent, obj, x, y, z, ry = 0) { obj.position.set(x, y, z); obj.ro
 export function addHeroes(P) {
   const anchors = {}, figs = [], movers = [];
   const hero = (k, i, fig, parent, x, y, z, ry) => { place(parent ?? P[k].island, fig, x, y, z, ry); figs.push(fig); anchors[`${k}.hero.${i}`] = fig.userData.anchor; return fig; };
-  const sign = (k, x, z, ry, color) => { const s = place(P[k].island, signPost(color), x, 0.15, z, ry); anchors[`${k}.sign`] = s.userData.anchor; };
+  // таблички книг на планетах убраны (spec v0.6): описание книг — на полке в Доме автора
   const tag = (k, i, obj, y = 0.9) => { const a = new THREE.Object3D(); a.position.y = y; obj.add(a); anchors[`${k}.hero.${i}`] = a; };
 
   // ---------- Кувшинки: принцесса Ирис, русалочка и ветер-эльф, звёздный кит ----------
@@ -50,7 +50,6 @@ export function addHeroes(P) {
     });
     place(P.kuv.root, socks, -8.5, 3.2, -3.5);
     movers.push((t) => { socks.position.y = 3.2 + Math.sin(t * 0.8) * 0.25; socks.rotation.y = t * 0.1; });
-    sign('kuv', 1.2, 3.0, 0.5, 0xcdeee8);
   }
 
   // ---------- Дуб, орех и мочало: Яся (7 лет), Котя, Соня и Стеша, Рома ----------
@@ -76,7 +75,6 @@ export function addHeroes(P) {
     const sb = mesh(new THREE.BoxGeometry(0.46, 0.05, 0.22), clay(0xf6d35b)); sb.position.y = -1.1; seat.add(sb);
     place(isl, swing, 3.3, 0.1, -0.9, 0.6);
     movers.push((t) => { seat.rotation.x = Math.sin(t * 1.6) * 0.35; });
-    sign('dub', 0.2, 0.8, 0.7, 0xffe2c8);
     void sonya;
   }
 
@@ -102,7 +100,6 @@ export function addHeroes(P) {
     const rope = mesh(new THREE.CylinderGeometry(0.008, 0.008, 2, 4), clay(0xffffff)); rope.rotation.z = Math.PI / 2; rope.position.y = 1.3; line.add(rope);
     [0xf49ac1, 0x8fd3ff, 0xffffff].forEach((c, i) => { const cl = mesh(new THREE.BoxGeometry(0.36, 0.42, 0.02), clay(c)); cl.position.set(-0.6 + i * 0.6, 1.08, 0); line.add(cl); });
     place(isl, line, -3.0, 0.1, 0.0, 1.2);
-    sign('fan', 0.6, 1.3, 0.2, 0xf8d8ea);
   }
 
   // ---------- Асфодель: Мика, Элли, Лазурина ----------
@@ -114,7 +111,6 @@ export function addHeroes(P) {
     // светлячки над полем
     const bugs = []; for (let i = 0; i < 20; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), glow(0xfff1a8, 2)); isl.add(b); bugs.push([b, i * 0.7]); }
     movers.push((t) => bugs.forEach(([b, a]) => b.position.set(Math.cos(a + t * 0.2) * (2 + (a % 3)), 0.8 + Math.sin(t * 2 + a) * 0.3, Math.sin(a + t * 0.2) * (2 + (a % 3)))));
-    { const sp = place(P.asf.city, signPost(0xd5dcf5, 1.3), -2.3, 0, 1.6, 0.3); anchors['asf.sign'] = sp.userData.anchor; }
   }
 
   return {

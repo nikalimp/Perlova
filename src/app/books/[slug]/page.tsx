@@ -33,8 +33,9 @@ export default async function BookPage({ params }: { params: Promise<{ slug: str
   const path = `/books/${b.slug}/`;
   const related = b.related.map(bookBySlug).filter((x): x is NonNullable<typeof x> => Boolean(x));
 
+  // описание книги открывается у книжной полки в Доме автора (spec v0.6)
   return (
-    <Panel view={b.planet ?? "shelf"} back={b.planet ? `/#planet-${b.planet}` : "/#home"}>
+    <Panel view="shelf" back="/books/" backLabel="Закрыть и вернуться к полке">
       <JsonLd data={graph(bookSchema(b), breadcrumbs([{ name: "Главная", path: "/" }, { name: "Книги", path: "/books/" }, { name: b.title, path }]), b.faq.length > 0 && faqSchema(b.faq))} />
 
       <Section className="pt-10">

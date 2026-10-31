@@ -53,28 +53,16 @@ export default function Home() {
               <div className="world-spacer" aria-hidden />
               {k === "asf" && (
                 <>
-                  <section className="world-sec gate" data-p="0.72">
-                    <div className="say" data-anchor="author" data-say="gate" data-near="90">
-                      <p><b>16+.</b> {say.gate.text}</p>
-                      <a href="#home" id="skip16" className="say-btn">{say.gate.skip}</a>
-                    </div>
-                  </section>
+                  {/* точка маршрута камеры перед «Асфоделью»; предупреждения 16+ в полёте нет (решение Ника 2026-10-31) */}
+                  <section className="world-sec gate" data-p="0.72" aria-hidden />
                   <div className="world-spacer" aria-hidden />
                 </>
               )}
-              <section className="world-sec planet" data-p={P[k]} data-planet={k} id={`planet-${k}`} aria-labelledby={`sign-${k}`} style={{ ["--planet" as string]: t.color }}>
+              <section className="world-sec planet" data-p={P[k]} data-planet={k} id={`planet-${k}`} aria-label={`Планета книги «${b.title}»`} style={{ ["--planet" as string]: t.color }}>
                 <img className="world-poster" src={`/world/${k}.webp`} srcSet={`/world/${k}.webp 720w, /world/${k}@2x.webp 1440w`} sizes="(min-width: 640px) 560px, 100vw" alt={`Планета книги «${b.title}»`} loading="lazy" width={720} height={450} />
 
                 <div className="say" data-anchor="author" data-say={k} data-near="90"><p>{say[k]}</p></div>
 
-                {/* Табличка книги на столбике в мире → попап книги */}
-                <Link href={`/books/${b.slug}/`} className="sign" data-anchor={`${k}.sign`} data-near="34" id={`sign-${k}`}>
-                  <small>{b.genre} · {b.age.split(" · ")[0]}</small>
-                  <b>{b.title}</b>
-                  {b.awards && <i className="sign-award">Финал премии им. В. П. Крапивина</i>}
-                  <em>«{t.quote}»</em>
-                  <span>Открыть книгу <span aria-hidden>→</span></span>
-                </Link>
 
                 {/* Имена героев над фигурками → попап героя */}
                 <ul className="hero-tags" aria-label={`Герои книги «${b.title}»`}>
@@ -87,9 +75,9 @@ export default function Home() {
                           <p className="world-eyebrow">Герой книги «{b.title}»</p>
                           <h3 className="text-2xl">{c.name}</h3>
                           <p className="mt-2 text-[17px] leading-relaxed">{c.name.split(" (")[0]} — {c.text}</p>
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <Link href={`/books/${b.slug}/`} className="rounded-full bg-primary px-4 py-2 text-[15px] text-primary-foreground">О книге</Link>
-                            <button type="button" popoverTarget={`hero-${a}`} popoverTargetAction="hide" className="rounded-full border px-4 py-2 text-[15px]">Закрыть</button>
+                          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+                            <Link href={`/books/${b.slug}/`} className="hand-link">О книге</Link>
+                            <button type="button" popoverTarget={`hero-${a}`} popoverTargetAction="hide" className="hand-link">Закрыть</button>
                           </div>
                         </div>
                       </li>
@@ -114,8 +102,8 @@ export default function Home() {
             <li><Link href="/contacts/" className="sign small" data-anchor="home.contacts" data-near="30"><small>Почтовый ящик</small><b>Написать автору</b><span>Встречи, издание, переводы <span aria-hidden>→</span></span></Link></li>
           </ul>
 
-          {/* копирайт и тег разработчика — табличка на краю острова (решение Ника 2026-10-30) */}
-          <p className="credit" data-anchor="home.credit" data-near="26">© {new Date().getFullYear()} Евгения Перлова · сайт — <a href="https://nikalimp.ru" target="_blank" rel="noopener">nikalimp</a></p>
+          {/* копирайт и тег разработчика — табличка на краю острова (решение Ника 2026-10-30, текст — 2026-10-31) */}
+          <p className="credit" data-anchor="home.credit" data-near="26">© {new Date().getFullYear()} Евгения Перлова · Разработка сайта <a href="https://nikalimp.ru" target="_blank" rel="noopener">nikalimp.ru</a></p>
 
           <div popover="auto" id="reviews" className="pop pop-wide">
             <button type="button" popoverTarget="reviews" popoverTargetAction="hide" className="pop-close" aria-label="Закрыть">×</button>

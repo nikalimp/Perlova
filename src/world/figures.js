@@ -5,7 +5,7 @@ const cap = (r, l, m) => mesh(new THREE.CapsuleGeometry(r, l, 6, 12), m);
 const M = { eye: clay(0x26201f, 0.4), white: clay(0xffffff, 0.5), cheek: clay(0xf4a6a6, 0.9), wing: new THREE.MeshPhysicalMaterial({ color: 0xdff4ff, roughness: 0.1, transmission: 0.6, transparent: true, opacity: 0.6, thickness: 0.05 }) };
 
 // Фигурка-«чиби» из глины. Начало координат — у ног. Рост при scale = 1 — около 1,5.
-// o: skin, hair, style ('pigtails' | 'bob' | 'short' | 'long' | 'bun'), top, bottom, dress (true — юбка-конус), shoes,
+// o: skin, hair, hair2 (пряди), eye, necklace, style ('pigtails' | 'bob' | 'short' | 'long' | 'bun' | 'wavy'), top, bottom, dress (true — юбка-конус), shoes,
 //    wreath, crown, wings, ears (эльф), tail (русалка), wave (машет рукой), hop (подпрыгивает), scale
 export function figure(o = {}) {
   const skin = clay(o.skin ?? 0xf6d2b8), hair = clay(o.hair ?? 0xe9c46a, 0.7), top = clay(o.top ?? 0xf07d24), bottom = clay(o.bottom ?? 0x2f56a6), shoes = clay(o.shoes ?? 0x5a3a2c);
@@ -37,7 +37,8 @@ export function figure(o = {}) {
 
   const head = new THREE.Group(); head.position.y = 1.18; body.add(head);
   const hd = sphere(0.3, skin, 28, 20); head.add(hd);
-  const eyes = [-0.1, 0.1].map((x) => { const e = sphere(0.035, M.eye, 10, 8); e.position.set(x, 0.02, 0.28); e.scale.y = 1.3; head.add(e); return e; });
+  const eyeM = o.eye ? clay(o.eye, 0.4) : M.eye;
+  const eyes = [-0.1, 0.1].map((x) => { const e = sphere(0.035, eyeM, 10, 8); e.position.set(x, 0.02, 0.28); e.scale.y = 1.3; head.add(e); return e; });
   [-0.17, 0.17].forEach((x) => { const c = sphere(0.05, M.cheek, 10, 8); c.scale.set(1, 0.6, 0.4); c.position.set(x, -0.08, 0.25); head.add(c); });
   const mouth = mesh(new THREE.TorusGeometry(0.045, 0.012, 6, 12, Math.PI), M.eye); mouth.rotation.z = Math.PI; mouth.position.set(0, -0.1, 0.29); head.add(mouth);
 
@@ -49,6 +50,21 @@ export function figure(o = {}) {
   if (style === 'pigtails') [-1, 1].forEach((s) => { const p = sphere(0.12, hair, 14, 10); p.scale.set(0.8, 1.3, 0.8); p.position.set(s * 0.34, -0.08, -0.06); head.add(p); const tie = sphere(0.04, clay(o.tie ?? 0xe0522a), 8, 6); tie.position.set(s * 0.32, 0.06, -0.04); head.add(tie); });
   if (style === 'bob') { const b = sphere(0.34, hair, 20, 14); b.scale.set(1.05, 0.8, 1); b.position.set(0, -0.04, -0.08); head.add(b); }
   if (style === 'long') { const b = cap(0.26, 0.4, hair); b.scale.z = 0.5; b.position.set(0, -0.3, -0.16); head.add(b); }
+  if (style === 'wavy') {
+    // волнистые волосы до плеч со светлыми прядями, чёлка набок (автор, spec v0.6)
+    const light = clay(o.hair2 ?? 0xd8b27c, 0.7);
+    for (let row = 0; row < 3; row++) for (let i = 0; i < 9; i++) {
+      const a = -Math.PI * 0.74 + (i / 8) * Math.PI * 1.48 + (row % 2) * 0.09; // от затылка (a = 0) к вискам, лицо открыто
+      const r = 0.3 + row * 0.03, c = sphere(0.1 - row * 0.008, (i + row) % 3 ? hair : light, 12, 8);
+      c.position.set(Math.sin(a) * r, -0.02 - row * 0.13, -Math.cos(a) * r * 0.9 - 0.02);
+      c.scale.set(1, 1.25, 1); head.add(c);
+    }
+    const side = sphere(0.18, light, 14, 10); side.scale.set(1.3, 0.5, 0.6); side.position.set(-0.08, 0.17, 0.2); side.rotation.z = 0.35; head.add(side);
+  }
+  if (o.necklace) {
+    const chain = mesh(new THREE.TorusGeometry(0.13, 0.008, 6, 28), clay(o.necklace, 0.3, { metalness: 0.6 })); chain.rotation.x = Math.PI / 2 + 0.35; chain.position.set(0, 0.86, 0.03); body.add(chain);
+    const drop = sphere(0.025, clay(o.necklace, 0.3, { metalness: 0.6 }), 8, 6); drop.scale.y = 1.4; drop.position.set(0, 0.79, 0.15); body.add(drop);
+  }
   if (style === 'bun') { const b = sphere(0.13, hair, 14, 10); b.position.set(0, 0.34, -0.12); head.add(b); }
   if (o.wreath) { const w = new THREE.Group(); for (let i = 0; i < 10; i++) { const f = sphere(0.045, clay([0xffffff, 0xf6d35b, 0xb53389, 0x8fd3ff][i % 4], 0.6), 8, 6); const a = (i / 10) * Math.PI * 2; f.position.set(Math.cos(a) * 0.3, 0, Math.sin(a) * 0.3); w.add(f); } w.position.y = 0.2; w.rotation.x = -0.15; head.add(w); }
   if (o.crown) { const c = mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.1, 10, 1, true), clay(o.crown, 0.3, { metalness: 0.5, side: THREE.DoubleSide })); c.position.y = 0.33; head.add(c); }

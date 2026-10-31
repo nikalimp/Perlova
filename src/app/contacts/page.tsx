@@ -3,7 +3,6 @@ import { Panel } from "@/components/panel";
 import { site } from "@/content/site";
 import { about } from "@/content/about";
 import { Container, Section } from "@/components/container";
-import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/json-ld";
 import { graph, personId } from "@/lib/schema";
 
@@ -41,8 +40,8 @@ export default function Contacts() {
             ))}
           </dl>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg" className="rounded-full"><a href={`mailto:${c.email}`} data-goal="contact_email">Написать на почту</a></Button>
-            <Button asChild size="lg" variant="outline" className="rounded-full"><a href={c.telegram} target="_blank" rel="noopener" data-goal="contact_tg">Написать в Telegram</a></Button>
+            <a href={`mailto:${c.email}`} data-goal="contact_email" className="hand-link">Написать на почту</a>
+            <a href={c.telegram} target="_blank" rel="noopener" data-goal="contact_tg" className="hand-link">Написать в Telegram</a>
           </div>
           <h2 className="mt-14 text-2xl font-semibold tracking-tight">О чём можно написать</h2>
           <ul className="mt-4 list-disc space-y-2 pl-5">
