@@ -49,10 +49,10 @@ export function buildAuthor(scene, stations) {
         // у края окна посадки облачко приподнимается — взлёт и посадка мягкие
         const d = Math.abs(p - S.at.p); land = 1 - smooth(THREE.MathUtils.clamp((d - W * 0.5) / (W * 0.5), 0, 1));
         if (!sit && S.at.hover) land = 0.4;
-        if (S.at.onCloud) land = 0; // приветствие: стоит на облачке в воздухе
+        land = sit ? land : 0; // на планеты не приземляется (spec v0.9): всегда на облачке рядом, садится только за свой стол
       }
       root.position.copy(tmp);
-      if (!sit) root.position.y += (1 - land) * 0.6 + (reduce ? 0 : Math.sin(t * 1.6) * 0.06 * (1 - land * 0.7));
+      if (!sit) root.position.y += (1 - land) * 0.2 + (reduce ? 0 : Math.sin(t * 1.6) * 0.06 * (1 - land * 0.7));
 
       // поворот: за столом — лицом к столу, иначе — к камере
       if (sit && S.at.seatQuat) { S.at.seatQuat(q); e.setFromQuaternion(q, 'YXZ'); yaw = e.y; }

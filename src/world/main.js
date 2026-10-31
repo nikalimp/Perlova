@@ -28,7 +28,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.shadowMap.autoUpdate = false; // тени пересчитываются 12 раз в секунду вместе с покадровой анимацией
+// тени — каждый кадр (spec v0.9): после склейки сцены это дёшево, а тень больше не отстаёт от автора рывками
 
 const painter = createPainter(renderer, mobile);
 const scene = new THREE.Scene();
@@ -104,12 +104,11 @@ const local3 = (k, x, y, z) => () => atL(k, x, y, z);
 const seatW = () => { const v = new THREE.Vector3(); P.home.seat.getWorldPosition(v); return v; };
 const STATIONS = [
   // приветствие: автор близко и по центру кадра, лицом к гостю (spec v0.6)
-  { p: 0.00, say: 'intro', wave: true, onCloud: true, pos: () => { const c = V(10, 34, 64); return c.clone().add(V(40, 0, -30).sub(c).normalize().multiplyScalar(9)).add(V(0, -2.6, 0)); } },
-  { p: 0.16, say: 'kuv', pos: local3('kuv', 2.2, 0.25, 0.6), planet: 'kuv' },
+  { p: 0.00, say: 'intro', wave: true, onCloud: true, pos: () => { const c = V(10, 34, 64); return c.clone().add(V(40, 0, -30).sub(c).normalize().multiplyScalar(9)).add(V(0, -2.5, 0)); } },
+  { p: 0.16, say: 'kuv', pos: local3('kuv', 2.5, 0.3, 1.3), planet: 'kuv' }, // ниже в кадре: над автором есть место для реплики
   { p: 0.39, say: 'dub', pos: local3('dub', 4.2, 0.06, 1.2), planet: 'dub' }, // трава справа от площадки: не за щитом (проверено лучом сверху)
   { p: 0.61, say: 'fan', pos: local3('fan', 4.2, 0.06, -1.0), planet: 'fan' }, // лужайка справа: не в речке и не за скамейкой (проверено лучом сверху)
   { p: 0.80, say: 'asf', pos: local3('asf', 2.4, 0.12, 2.1), planet: 'asf' },
-  { p: 0.88, say: 'asf', pos: local3('asf', 2.4, 10.45, 0.2) },
   { p: 1.00, say: 'home', sit: true, pos: seatW, seatQuat: (q) => P.home.seat.getWorldQuaternion(q) },
 ];
 const author = buildAuthor(scene, STATIONS);
@@ -189,6 +188,7 @@ function progress() {
   return anchors[anchors.length - 1][1];
 }
 let target = 0, cur = 0;
+let fpsAt = 0; const fpsEl = location.search.includes('fps') ? Object.assign(document.body.appendChild(document.createElement('div')), { style: 'position:fixed;left:10px;top:10px;z-index:99;font:12px/1 monospace;background:#000a;color:#fff;padding:6px 8px;border-radius:6px;pointer-events:none' }) : null;
 let homeP = null, homeY = null, backUntil = 0; // где была главная, когда открыли страницу (spec v0.8)
 const camPos = V(10, 60, 90), camLook = V(40, 0, -30); let skyP = 0, first = true;
 const onScroll = () => { target = progress(); };
@@ -387,24 +387,23 @@ function tick() {
 
   if (curZone !== 'kuv' && P.kuv.open) lily(0);
   // покадровая анимация (spec v0.5): герои и предметы живут на 12 кадрах в секунду, камера и полёт автора — плавно
-  // Облегчение (spec v0.7): планеты, герои и тени обновляются только на новом «кадре» мультфильма, а не 60 раз в секунду
-  const ts = Math.floor(t * 12) / 12;
-  if (ts !== lastTs || curZone !== lastZone) {
-    lastTs = ts; lastZone = curZone;
-    P.kuv.update(ts, reduce);
-    P.dub.update(ts, reduce, view ? (curZone === 'dub' ? 1 : 0) : local(p, 0.3, 0.39));
-    P.fan.update(ts, reduce);
-    const stairs = view ? (curZone === 'asf' ? 0.5 : 0) : local(p, 0.74, 0.88);
-    P.asf.update(ts, reduce, stairs);
-    P.home.update(ts, reduce, night);
-    heroes.update(ts, reduce);
-    life.update(ts, night);
+  // Плавная анимация (spec v0.9): текущая планета, герои, автор и деревья — каждый кадр;
+  // дальние планеты и проверка детализации — 12 раз в секунду (их почти не видно, а работа процессору меньше)
+  const t12 = Math.floor(t * 12), slow = t12 !== lastTs || curZone !== lastZone; lastTs = t12; lastZone = curZone;
+  const upd = (k) => slow || k === curZone;
+  if (upd('kuv')) P.kuv.update(t, reduce);
+  if (upd('dub')) P.dub.update(t, reduce, view ? (curZone === 'dub' ? 1 : 0) : local(p, 0.3, 0.39));
+  if (upd('fan')) P.fan.update(t, reduce);
+  if (upd('asf')) P.asf.update(t, reduce, view ? (curZone === 'asf' ? 0.5 : 0) : local(p, 0.74, 0.88));
+  if (upd('home')) P.home.update(t, reduce, night);
+  heroes.update(t, reduce);
+  life.update(t, night);
+  if (slow) {
     figs.forEach((f) => { f.getWorldPosition(figW); f.visible = figW.distanceTo(camPos) < 42; });
     // детализация: отдельная мелочь, которая на экране меньше ~6 px, уходит на слой 1 (не рисуется)
     bakeInfo.rest.forEach(({ o, r }) => { o.getWorldPosition(figW); o.layers.set(r / figW.distanceTo(camPos) > 0.0025 ? 0 : 1); });
-    renderer.shadowMap.needsUpdate = true;
   }
-  const say = author.update(ts, p, camPos, reduce);
+  const say = author.update(t, p, camPos, reduce);
   // след облачка: вмятина в траве остаётся там, где автор приземлялся
   const la = author.landedAt;
   if (la && la.planet && !dented.has(la)) {
@@ -426,6 +425,8 @@ function tick() {
   // фокус объектива: на авторе, пока она говорит, иначе — на точке взгляда камеры
   // само снижает чёткость кадра, если видеокарта не успевает (средний кадр дольше 24 мс)
   const now = performance.now(); if (lastNow) frameMs += (Math.min(100, now - lastNow) - frameMs) * 0.05; lastNow = now;
+  // ?fps в адресе — счётчик кадров в углу: проверить скорость на своём устройстве
+  if (fpsEl && now - fpsAt > 500) { fpsAt = now; fpsEl.textContent = `${Math.round(1000 / frameMs)} fps · ${frameMs.toFixed(1)} мс · ×${pr.toFixed(2)}`; }
   if (++perfN > 90) { perfN = 0; if (frameMs > 21 && pr > 0.8) { pr = Math.max(0.75, pr - 0.25); renderer.setPixelRatio(pr); resize(); } }
   painter.render(scene, camera, night, sayNow ? camPos.distanceTo(author.root.position) : camPos.distanceTo(camLook));
   if (++frames === 3) opts.onReady?.(); // первые кадры готовы — прелоадер можно снять

@@ -52,8 +52,8 @@ export default function Home() {
           <div className="say say-intro" data-anchor="author" data-say="intro" data-near="90">
             <h1 className="say-title">{say.intro.h1}</h1>
             <p>{say.intro.answer}</p>
-            <p className="mt-2">{say.intro.invite} <span className="world-only world-hint" aria-hidden>↓</span></p>
-            <p className="world-only mt-2"><MusicButton /></p>
+            <p className="mt-2">{say.intro.invite}</p>
+            <p className="world-only mt-2">{say.intro.music}<br /><MusicButton /></p>
           </div>
         </section>
 
