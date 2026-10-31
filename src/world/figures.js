@@ -67,6 +67,7 @@ export function figure(o = {}) {
     const pose = g.userData.pose;
     legs.forEach((l) => { l.visible = !pose.sit; });
     body.position.y = pose.sit ? 0 : o.hop ? Math.max(0, Math.sin(t * 3 + seed)) * 0.12 : Math.sin(t * 2 + seed) * 0.015;
+    const br = 1 + Math.sin(t * 2.4 + seed) * 0.03; torso.scale.set(br, 1, br); // дыхание
     const blink = (t + seed) % 3.6 < 0.12 ? 0.15 : 1.3; eyes.forEach((e) => { e.scale.y = blink; });
     head.rotation.y = Math.sin(t * 0.5 + seed) * 0.25;
     if (pose.write) { arms[1].rotation.set(-1.1 + Math.sin(t * 7) * 0.08, 0, 0.15 + Math.sin(t * 3.1) * 0.12); head.rotation.x = 0.3; }

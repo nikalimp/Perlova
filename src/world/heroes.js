@@ -65,6 +65,7 @@ export function addHeroes(P) {
     const lamp = new THREE.Group();
     const lp = mesh(new THREE.CylinderGeometry(0.05, 0.07, 2, 8), clay(0x34405e)); lp.position.y = 1; lamp.add(lp);
     const lb = sphere(0.18, glow(0xffe7a8, 0.8)); lb.position.y = 2.05; lamp.add(lb);
+    lamp.userData.dust = { y: 2.05 };
     place(isl, lamp, -2.2, 0.1, 1.2);
     [[-4.2, 0.4], [-3.4, -3.6], [3.8, -2.2], [-0.2, 4.2]].forEach(([x, z]) => place(isl, tree(0x7cbf55, 0x8a6247, 0.5, 0.7), x, 0.1, z));
     const swing = new THREE.Group();

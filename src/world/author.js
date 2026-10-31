@@ -33,8 +33,8 @@ export function buildAuthor(scene, stations) {
     return { st: s < 0.5 ? A : B, land: 0, from: A, to: B, s };
   }
 
-  return {
-    root, fig, anchor: fig.userData.anchor,
+  const api = {
+    root, fig, cloud, anchor: fig.userData.anchor, landedAt: null,
     // p — прогресс маршрута; cam — позиция камеры; возвращает id реплики, которую сейчас показывать
     update(t, p, cam, reduce) {
       const S = state(p);
@@ -64,8 +64,11 @@ export function buildAuthor(scene, stations) {
       const pose = fig.userData.pose;
       pose.sit = sit; pose.write = sit; pose.wave = !sit && (S.st.wave || land < 0.5);
       if (!reduce) fig.userData.update(t);
+      // станция, где облачко сейчас стоит на земле, — для следа в траве (life.js)
+      api.landedAt = S.at && !sit && !S.at.hover && land > 0.95 ? S.at : null;
       // реплика видна, пока автор у станции (у «зависающих» станций — тоже, без посадки)
       return S.at && Math.abs(p - S.at.p) < W * 0.8 ? S.at.say : '';
     },
   };
+  return api;
 }
