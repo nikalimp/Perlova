@@ -10,6 +10,7 @@ import { buildAuthor } from './author.js';
 import { createPainter } from './paint.js';
 import { addLife } from './life.js';
 import { bakeStatic } from './bake.js';
+import { xylo, fx, setScene } from '../lib/sound';
 
 // Два режима камеры:
 //   скролл (главная) — камера идёт по ключам KEYS, прогресс берётся из секций .world-sec[data-p];
@@ -191,10 +192,16 @@ function progress() {
   return anchors[anchors.length - 1][1];
 }
 let target = 0, cur = 0;
-let fpsAt = 0; const fpsEl = location.search.includes('fps') ? Object.assign(document.body.appendChild(document.createElement('div')), { style: 'position:fixed;left:10px;top:10px;z-index:99;font:12px/1 monospace;background:#000a;color:#fff;padding:6px 8px;border-radius:6px;pointer-events:none' }) : null;
+let fpsAt = 0, lastLit = 0; const fpsEl = location.search.includes('fps') ? Object.assign(document.body.appendChild(document.createElement('div')), { style: 'position:fixed;left:10px;top:10px;z-index:99;font:12px/1 monospace;background:#000a;color:#fff;padding:6px 8px;border-radius:6px;pointer-events:none' }) : null;
 let homeP = null, homeY = null, backUntil = 0; // где была главная, когда открыли страницу (spec v0.8)
 const camPos = V(10, 60, 90), camLook = V(40, 0, -30); let skyP = 0, first = true;
-const onScroll = () => { target = progress(); if (!snapping) armSnap(); };
+let xyStep = -1, xyAt = 0;
+const onScroll = () => {
+  target = progress(); if (!snapping) armSnap();
+  // ксилофон (spec v0.12): 42 ноты на весь путь — листаешь, как ведёшь палочкой по ксилофону (мажорная гамма, две октавы)
+  const st = Math.floor(target * 42), now = performance.now();
+  if (st !== xyStep && now - xyAt > 70) { if (xyStep >= 0) xylo(((st % 14) + 14) % 14, 0.08); xyStep = st; xyAt = now; }
+};
 // Доводка скролла (spec v0.11, дизайнер): человек перестал листать между сценами — плавно доводим до ближайшей остановки.
 // Остановки — точки, где автор говорит: приветствие и планеты. Любое касание, колесо или клавиша доводку отменяют.
 const STOPS = [0, 0.16, 0.39, 0.61, 0.80, 0.88, 1]; // 0.88 — Город Снегов наверху лестницы
@@ -211,8 +218,13 @@ function armSnap() {
     const ys = STOPS.map(yOf), y = scrollY; let best = ys[0]; ys.forEach((v) => { if (Math.abs(v - y) < Math.abs(best - y)) best = v; });
     if (Math.abs(best - y) < 4 || Math.abs(best - y) > innerHeight * 1.6) return; // уже на месте или далеко — не тянем
     const from = y, t0 = performance.now(), dur = Math.min(900, 350 + Math.abs(best - y) * 0.6); snapping = true;
-    const step = (now) => { const k = Math.min(1, (now - t0) / dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-      scrollTo({ top: from + (best - from) * e, behavior: 'instant' }); if (k < 1 && snapping) snapRaf = requestAnimationFrame(step); else snapping = false; };
+    let last = from;
+    const step = (now) => {
+      if (Math.abs(scrollY - last) > 3) { snapping = false; return; } // страницу прокрутил кто-то другой (меню, ссылка) — не спорим
+      const k = Math.min(1, (now - t0) / dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      last = Math.round(from + (best - from) * e); scrollTo({ top: last, behavior: 'instant' }); last = scrollY;
+      if (k < 1 && snapping) snapRaf = requestAnimationFrame(step); else snapping = false;
+    };
     snapRaf = requestAnimationFrame(step);
   }, 220);
 }
@@ -230,7 +242,7 @@ const isPop = (el) => el instanceof HTMLElement && el.hasAttribute('popover');
 const onPopBefore = (e) => { if (isPop(e.target) && e.newState === 'closed' && e.target.contains(document.activeElement)) document.activeElement.blur(); };
 const onPopToggle = (e) => {
   const el = e.target; if (!isPop(el)) return;
-  if (e.newState === 'open') { popY.set(el, scrollY); return; }
+  if (e.newState === 'open') { popY.set(el, scrollY); fx('paper'); return; }
   if (popY.has(el) && el.id !== 'site-menu') keepY(popY.get(el)); // из меню уходят в другое место — позицию не держим
   if (invoker && invoker.isConnected) invoker.focus({ preventScroll: true });
 };
@@ -252,7 +264,11 @@ const bubble = document.getElementById('bubble');
 let bubbleAnchor = null, bubbleUntil = 0;
 function say(text, anchor) {
   if (!text || !bubble) return;
-  bubble.textContent = text; bubble.classList.add('on'); bubbleAnchor = anchor; bubbleUntil = performance.now() + 2600;
+  // вторая строка — цитата из книги, курсивом (spec v0.12)
+  const [main, quote] = String(text).split('\n');
+  const b = document.createElement('b'); b.textContent = main; bubble.replaceChildren(b);
+  if (quote) { const q = document.createElement('i'); q.textContent = quote; bubble.append(q); }
+  bubble.classList.add('on'); bubbleAnchor = anchor; bubbleUntil = performance.now() + (quote ? 5200 : 2600);
 }
 function lily(force) {
   const open = P.kuv.toggle(force);
@@ -276,7 +292,7 @@ function hitTest(e) {
   ray.setFromCamera(ptr, camera);
   for (const k of ['kuv', 'dub', 'fan']) { const h = ray.intersectObjects(P[k].hit, true)[0]; if (h) return ['act', k, h.object]; }
   let best = null;
-  for (const k of PLANETS) { const h = ray.intersectObject(P[k].root, true)[0]; if (h && (!best || h.distance < best[3])) best = ['planet', k, h.object, h.distance]; }
+  for (const k of PLANETS) { const h = ray.intersectObject(P[k].root, true)[0]; if (h && (!best || h.distance < best[3])) best = ['planet', k, h.object, h.distance, h.point]; }
   return best;
 }
 // Клик по планете — перелёт к ней (решение Ника 2026-10-29): на главной — скроллом, на других страницах — на её адрес
@@ -285,10 +301,24 @@ function flyTo(k) {
   if (!view) { document.getElementById(k === 'home' ? 'home' : `planet-${k}`)?.scrollIntoView({ behavior: 'smooth' }); return; }
   nav(k === 'home' ? '/about/' : `/books/${slugs[k]}/`);
 }
+// фигурка героя → его карточка (тот же попап, что у ярлыка)
+const heroOf = new Map(); Object.entries(ANCH).forEach(([id, a]) => { if (!id.includes('.hero.')) return; let f = a; while (f && !f.userData.pose) f = f.parent; if (f) heroOf.set(f, id); });
+const figOf = (o) => { for (let x = o; x; x = x.parent) if (x.userData.pose) return x; return null; };
 canvas.addEventListener('click', (e) => {
   const h = hitTest(e); if (!h) return;
-  const [kind, k, obj] = h;
-  if (kind === 'planet') { if (k !== curZone) flyTo(k); return; }
+  const [kind, k, obj, , point] = h;
+  if (kind === 'planet') {
+    if (k !== curZone) { flyTo(k); return; }
+    // своя планета: герой — карточка; предмет — «мнётся»; земля и вода — рябь (spec v0.12, дизайнер)
+    const fig = figOf(obj);
+    if (fig) { life.squish(fig); fx('squish'); const id = heroOf.get(fig); if (id) document.getElementById(`hero-${id}`)?.showPopover(); return; }
+    if (point) { life.ripple(P[k].island, point); fx('plop'); }
+    let top = obj; while (top.parent && top.parent !== P[k].island) top = top.parent;
+    if (top !== P[k].island && top.name !== 'baked' && obj.name !== 'baked') { life.squish(top); fx('squish'); }
+    return;
+  }
+  { let top = obj; while (top.parent && top.parent !== P[k].island) top = top.parent; life.squish(top); }
+  fx(k === 'dub' ? 'bounce' : k === 'fan' ? 'chime' : 'plop');
   if (k === 'kuv') lily();
   else { const id = P[k].pick(obj); if (id) say(P[k].press(id), ANCH[`${k}.act.${id}`] || P[k].anchorOf(id)); }
 });
@@ -423,6 +453,8 @@ function tick() {
   if (upd('home')) P.home.update(t, reduce, night);
   heroes.update(t, reduce);
   life.update(t, night);
+  setScene(view ? (curZone || 'home') : zone); // фон сцены: свой у каждой планеты (spec v0.12)
+  const lit = P.asf.stepsLit.n ?? 0; if (lit !== lastLit) { if (lit > lastLit) xylo(lit, 0.11); lastLit = lit; } // поющая лестница
   if (slow) {
     figs.forEach((f) => { f.getWorldPosition(figW); f.visible = figW.distanceTo(camPos) < 42; });
     // детализация: отдельная мелочь, которая на экране меньше ~6 px, уходит на слой 1 (не рисуется)

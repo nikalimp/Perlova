@@ -9,7 +9,7 @@ import { THREE } from './core.js';
 const ringGeo = new THREE.RingGeometry(0.86, 1, 40).rotateX(-Math.PI / 2);
 
 export function addLife(scene) {
-  const sway = [], dust = [], ponds = [], dents = [];
+  const sway = [], dust = [], ponds = [], dents = [], ripples = [], squishes = [];
   scene.traverse((o) => {
     if (o.userData.sway !== undefined) sway.push({ o, ph: o.userData.sway, rz: o.rotation.z, rx: o.rotation.x });
     if (o.userData.dust) dust.push(makeDust(o, o.userData.dust.y));
@@ -19,11 +19,23 @@ export function addLife(scene) {
   return {
     // t — «кадровое» время (12 кадров/с), night — 0…1
     update(t, night) {
+      // рябь от клика: кольцо расходится и тает
+      for (let i = ripples.length - 1; i >= 0; i--) { const r = ripples[i]; r.k += 0.03; r.m.scale.setScalar(0.1 + r.k * 1.4); r.m.material.opacity = (1 - r.k) * 0.6; if (r.k >= 1) { r.m.removeFromParent(); r.m.material.dispose(); ripples.splice(i, 1); } }
+      // «мнётся, как пластилин»: сплющился и упруго вернулся
+      for (let i = squishes.length - 1; i >= 0; i--) { const q = squishes[i]; q.k += 0.045; const e = Math.exp(-q.k * 5) * Math.cos(q.k * 16) * 0.22;
+        q.o.scale.set(q.s.x * (1 + e * 0.6), q.s.y * (1 - e), q.s.z * (1 + e * 0.6)); if (q.k >= 1) { q.o.scale.copy(q.s); squishes.splice(i, 1); } }
       sway.forEach(({ o, ph, rz, rx }) => { o.rotation.z = rz + Math.sin(t * 1.3 + ph) * 0.035; o.rotation.x = rx + Math.sin(t * 0.9 + ph * 1.7) * 0.02; });
       dust.forEach((d) => d.update(t, night));
       ponds.forEach((p) => p.update(t));
       dents.forEach((d) => { d.k = Math.min(1, d.k + 0.04); d.mats.forEach((m, i) => { m.opacity = d.k * (i ? 0.22 : 0.14); }); });
     },
+    // рябь в точке клика по земле или воде (spec v0.12, дизайнер)
+    ripple(group, pos) {
+      const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, depthWrite: false }));
+      group.updateMatrixWorld(); m.position.copy(group.worldToLocal(pos.clone())); m.position.y += 0.03; group.add(m); ripples.push({ m, k: 0 });
+    },
+    // предмет «мнётся» по клику; повторный клик во время анимации не копит искажение
+    squish(o) { if (squishes.some((q) => q.o === o)) return; squishes.push({ o, s: o.scale.clone(), k: 0 }); },
     // вмятина от облачка там, где автор приземлился; group — остров, pos — точка на земле в мировых координатах
     dent(group, pos) {
       const g = new THREE.Group(), mats = [];
