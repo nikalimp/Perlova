@@ -13,6 +13,7 @@ export function BookCover({ b, className = "", priority = false }: { b: Book; cl
         sizes="(min-width: 768px) 320px, 60vw"
         alt={`Обложка книги «${b.title}»`}
         loading={priority ? "eager" : "lazy"}
+        style={b.coverRatio ? { aspectRatio: b.coverRatio } : undefined}
         className={`aspect-[3/4] w-full rounded-md object-cover shadow-[0_12px_30px_-12px_oklch(0.312_0.043_318_/_45%)] ${className}`}
       />
     );

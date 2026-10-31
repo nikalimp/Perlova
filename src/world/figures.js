@@ -5,7 +5,7 @@ const cap = (r, l, m) => mesh(new THREE.CapsuleGeometry(r, l, 6, 12), m);
 const M = { eye: clay(0x26201f, 0.4), white: clay(0xffffff, 0.5), cheek: clay(0xf4a6a6, 0.9), wing: new THREE.MeshPhysicalMaterial({ color: 0xdff4ff, roughness: 0.1, transmission: 0.6, transparent: true, opacity: 0.6, thickness: 0.05 }) };
 
 // Фигурка-«чиби» из глины. Начало координат — у ног. Рост при scale = 1 — около 1,5.
-// o: skin, hair, hair2 (пряди), eye, necklace, style ('pigtails' | 'bob' | 'short' | 'long' | 'bun' | 'wavy'), top, bottom, dress (true — юбка-конус), shoes,
+// o: skin, hair, hair2 (пряди), eye, necklace, hat (соломка), hatBand, style ('pigtails' | 'bob' | 'short' | 'long' | 'bun' | 'wavy'), top, bottom, dress (true — юбка-конус), shoes,
 //    wreath, crown, wings, ears (эльф), tail (русалка), wave (машет рукой), hop (подпрыгивает), scale
 export function figure(o = {}) {
   const skin = clay(o.skin ?? 0xf6d2b8), hair = clay(o.hair ?? 0xe9c46a, 0.7), top = clay(o.top ?? 0xf07d24), bottom = clay(o.bottom ?? 0x2f56a6), shoes = clay(o.shoes ?? 0x5a3a2c);
@@ -51,15 +51,23 @@ export function figure(o = {}) {
   if (style === 'bob') { const b = sphere(0.34, hair, 20, 14); b.scale.set(1.05, 0.8, 1); b.position.set(0, -0.04, -0.08); head.add(b); }
   if (style === 'long') { const b = cap(0.26, 0.4, hair); b.scale.z = 0.5; b.position.set(0, -0.3, -0.16); head.add(b); }
   if (style === 'wavy') {
-    // волнистые волосы до плеч со светлыми прядями, чёлка набок (автор, spec v0.6)
-    const light = clay(o.hair2 ?? 0xd8b27c, 0.7);
-    for (let row = 0; row < 3; row++) for (let i = 0; i < 9; i++) {
-      const a = -Math.PI * 0.74 + (i / 8) * Math.PI * 1.48 + (row % 2) * 0.09; // от затылка (a = 0) к вискам, лицо открыто
-      const r = 0.3 + row * 0.03, c = sphere(0.1 - row * 0.008, (i + row) % 3 ? hair : light, 12, 8);
-      c.position.set(Math.sin(a) * r, -0.02 - row * 0.13, -Math.cos(a) * r * 0.9 - 0.02);
-      c.scale.set(1, 1.25, 1); head.add(c);
+    // волнистые волосы одного цвета, чуть ниже ушей (автор, spec v0.8)
+    for (let row = 0; row < 2; row++) for (let i = 0; i < 9; i++) {
+      const a = -Math.PI * 0.72 + (i / 8) * Math.PI * 1.44 + (row % 2) * 0.09; // от затылка (a = 0) к вискам, лицо открыто
+      const r = 0.3 + row * 0.025, c = sphere(0.1 - row * 0.01, hair, 12, 8);
+      c.position.set(Math.sin(a) * r, -0.03 - row * 0.12, -Math.cos(a) * r * 0.9 - 0.02);
+      c.scale.set(1, 1.2, 1); head.add(c);
     }
-    const side = sphere(0.18, light, 14, 10); side.scale.set(1.3, 0.5, 0.6); side.position.set(-0.08, 0.17, 0.2); side.rotation.z = 0.35; head.add(side);
+    const side = sphere(0.18, hair, 14, 10); side.scale.set(1.3, 0.5, 0.6); side.position.set(-0.08, 0.17, 0.2); side.rotation.z = 0.35; head.add(side);
+  }
+  if (o.hat) {
+    // соломенная шляпа с широкими полями и лентой
+    const straw = clay(o.hat, 0.95), hat = new THREE.Group();
+    const brim = mesh(new THREE.CylinderGeometry(0.56, 0.6, 0.035, 36), straw); hat.add(brim);
+    const crown = mesh(new THREE.CylinderGeometry(0.27, 0.31, 0.22, 28), straw); crown.position.y = 0.12; hat.add(crown);
+    const top = sphere(0.27, straw, 24, 10); top.scale.y = 0.25; top.position.y = 0.23; hat.add(top);
+    const band = mesh(new THREE.CylinderGeometry(0.315, 0.315, 0.06, 28, 1, true), clay(o.hatBand ?? 0x9b6b3c, 0.8)); band.position.y = 0.04; hat.add(band);
+    hat.position.set(0, 0.25, -0.02); hat.rotation.set(-0.12, 0, 0.08); head.add(hat);
   }
   if (o.necklace) {
     const chain = mesh(new THREE.TorusGeometry(0.13, 0.008, 6, 28), clay(o.necklace, 0.3, { metalness: 0.6 })); chain.rotation.x = Math.PI / 2 + 0.35; chain.position.set(0, 0.86, 0.03); body.add(chain);

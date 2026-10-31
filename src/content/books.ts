@@ -21,6 +21,7 @@ export type Book = {
   illustrator?: string;
   editions: Edition[];
   cover?: string; // путь в public/
+  coverRatio?: string; // пропорции обложки, если не 3/4 (у издания «Аквилегия-М» — 5/8)
   answer: string; // прямой ответ — первый абзац
   annotation: string; // аннотация издательства, дословно
   about: string[]; // абзацы «о чём и для кого»
@@ -263,6 +264,8 @@ export const books: Book[] = [
   {
     slug: "tantsy-ogurtsy-i-bolshie-mechty",
     title: "Танцы, огурцы и большие мечты",
+    cover: "/books/tantsy-ogurtsy-i-bolshie-mechty.webp", // обложка от Ника 2026-10-31
+    coverRatio: "577/918",
     h1: "«Танцы, огурцы и большие мечты» — повесть для подростков",
     metaTitle: "«Танцы, огурцы и большие мечты» — повесть",
     metaDescription:
@@ -309,6 +312,8 @@ export const books: Book[] = [
   {
     slug: "day-mne-ruku",
     title: "Дай мне руку",
+    cover: "/books/day-mne-ruku.webp", // обложка от Ника 2026-10-31
+    coverRatio: "575/918",
     h1: "«Дай мне руку» — повесть для подростков 12+",
     metaTitle: "«Дай мне руку» — повесть для подростков",
     metaDescription:
