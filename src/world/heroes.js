@@ -108,9 +108,6 @@ export function addHeroes(P) {
     hero('asf', 0, figure({ style: 'short', hair: 0x2a2020, top: 0x6f767e, bottom: 0x34405e, scale: 0.86 }), null, 1.5, 0.1, 2.9, -0.4);
     hero('asf', 1, figure({ style: 'long', hair: 0xc89a5a, top: 0x2f56a6, dress: true, wave: true, scale: 0.8 }), null, 0.8, 0.1, 2.6, 0.2);
     hero('asf', 2, figure({ style: 'long', hair: 0xffffff, top: 0xf3f6fa, dress: true, crown: 0xc3ccd6, scale: 0.7 }), P.asf.city, 0, 0, 1.25, 0);
-    // светлячки над полем
-    const bugs = []; for (let i = 0; i < 20; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 5), glow(0xfff1a8, 2)); isl.add(b); bugs.push([b, i * 0.7]); }
-    movers.push((t) => bugs.forEach(([b, a]) => b.position.set(Math.cos(a + t * 0.2) * (2 + (a % 3)), 0.8 + Math.sin(t * 2 + a) * 0.3, Math.sin(a + t * 0.2) * (2 + (a % 3)))));
   }
 
   return {

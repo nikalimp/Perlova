@@ -20,6 +20,16 @@ const HEROES: Record<Planet, [number, string][]> = {
   asf: [[0, "asf.hero.0"], [1, "asf.hero.1"], [2, "asf.hero.2"]],
 };
 const shortName = (n: string) => n.replace(/\s*\(.*\)/, "");
+// Подсказки у сюрпризов (spec v0.7): ярлык над предметом, нажатие — то же, что клик по предмету в 3D (src/world/main.js, onClick)
+const ACTS: Partial<Record<Planet, { id: string; label: string; attr: Record<string, string> }[]>> = {
+  kuv: [{ id: "lily", label: "Кувшинка", attr: { id: "lilyBtn", "aria-pressed": "false" } }],
+  dub: [{ id: "oak", label: "Дуб", attr: { "data-dub": "oak" } }, { id: "nut", label: "Орех", attr: { "data-dub": "nut" } }, { id: "sponge", label: "Мочало", attr: { "data-dub": "sponge" } }],
+  fan: [
+    { id: "well", label: "Колодец", attr: { "data-smell": "well" } }, { id: "river", label: "Речка", attr: { "data-smell": "river" } },
+    { id: "milk", label: "Парное молоко", attr: { "data-smell": "milk" } }, { id: "stone", label: "Камень", attr: { "data-smell": "stone" } },
+    { id: "fan", label: "Пантонный веер", attr: { "data-smell": "fan" } },
+  ],
+};
 
 const reviews = [
   { text: "[…] И главный из них — научиться мечтать так, чтобы все сбывалось. И никогда не упускать самое важное слово: любовь.", who: "Ася Кравченко, детский писатель", book: "Дуб, орех и мочало", src: "отзыв для издания, сокращено" },
@@ -83,6 +93,11 @@ export default function Home() {
                       </li>
                     );
                   })}
+                  {(ACTS[k] ?? []).map((x) => (
+                    <li key={x.id} className="world-only">
+                      <button type="button" className="tag tag-act" data-anchor={`${k}.act.${x.id}`} data-near="22" {...x.attr}>{x.label}</button>
+                    </li>
+                  ))}
                 </ul>
               </section>
             </div>
@@ -95,11 +110,11 @@ export default function Home() {
           <h2 id="home-title" className="sr-only">Дом автора</h2>
           <div className="say" data-anchor="author" data-say="home" data-near="90"><p>{say.home}</p></div>
           <ul className="home-signs">
-            <li><Link href="/books/" className="sign small" data-anchor="home.books" data-near="30"><small>Полка</small><b>Все книги</b><span>{books.length} книг <span aria-hidden>→</span></span></Link></li>
-            <li><Link href="/about/" className="sign small" data-anchor="home.about" data-near="30"><small>Стол автора</small><b>Об авторе</b><span>Биография, премии, встречи <span aria-hidden>→</span></span></Link></li>
-            <li><button type="button" popoverTarget="reviews" className="sign small" data-anchor="home.reviews" data-near="30"><small>Доска</small><b>Отзывы</b><span>Что говорят о книгах</span></button></li>
-            <li><button type="button" popoverTarget="faq" className="sign small" data-anchor="home.faq" data-near="30"><small>Фонарь</small><b>Вопросы</b><span>С какой книги начать</span></button></li>
-            <li><Link href="/contacts/" className="sign small" data-anchor="home.contacts" data-near="30"><small>Почтовый ящик</small><b>Написать автору</b><span>Встречи, издание, переводы <span aria-hidden>→</span></span></Link></li>
+            <li><Link href="/books/" className="tag" data-anchor="home.books" data-near="30">Все книги</Link></li>
+            <li><Link href="/about/" className="tag" data-anchor="home.about" data-near="30">Об авторе</Link></li>
+            <li><button type="button" popoverTarget="reviews" className="tag" data-anchor="home.reviews" data-near="30">Отзывы</button></li>
+            <li><button type="button" popoverTarget="faq" className="tag" data-anchor="home.faq" data-near="30">Вопросы</button></li>
+            <li><Link href="/contacts/" className="tag" data-anchor="home.contacts" data-near="30">Написать автору</Link></li>
           </ul>
 
           {/* копирайт и тег разработчика — табличка на краю острова (решение Ника 2026-10-30, текст — 2026-10-31) */}
