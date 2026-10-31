@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "@fontsource-variable/golos-text/wght.css";
 import "./globals.css";
 import { site } from "@/content/site";
-import { KeyNav } from "@/components/widgets";
+import { BurgerMenu } from "@/components/burger";
 import { Preloader } from "@/components/preloader";
 import { MusicToggle } from "@/components/music";
 import { World } from "@/components/world";
@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <World />
         <Preloader />
         <MusicToggle />
-        <KeyNav />
+        <BurgerMenu />
         <main id="main" className="relative z-[1] flex-1">{children}</main>
         <CookieBanner />
       </body>

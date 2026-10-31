@@ -100,7 +100,8 @@ const VIEWS = {
   shelf: [() => toW('home', P.home.shelf).add(V(3.6, 2.4, 6.8).applyEuler(P.home.root.rotation)), () => toW('home', P.home.shelf), 1],
 };
 // ---------- автор-проводник: станции маршрута (spec v0.4). p совпадает с data-p секций главной ----------
-const local3 = (k, x, y, z) => () => atL(k, x, y, z);
+// точка на планете; координаты в .v — их меняет панель настройки (?tune)
+const local3 = (k, x, y, z) => { const f = () => atL(k, ...f.v); f.v = [x, y, z]; f.k = k; return f; };
 const seatW = () => { const v = new THREE.Vector3(); P.home.seat.getWorldPosition(v); return v; };
 const STATIONS = [
   // приветствие: автор близко и по центру кадра, лицом к гостю (spec v0.6)
@@ -116,7 +117,8 @@ ANCH.author = author.anchor;
 const life = addLife(scene);
 // облегчение (spec v0.8): неподвижные предметы склеиваются; подвижные находим, прогнав анимации вхолостую
 const SIM = [0.31, 1.73, 3.37, 6.11];
-const bakeInfo = bakeStatic([...Object.values(P).flatMap((p) => p.root.children), ...clouds, author.fig], Object.values(P).flatMap((p) => p.hit || []), (i) => {
+const TUNE = location.search.includes('tune'); // панель настройки: склейку выключаем, иначе предметы не сдвинуть
+const bakeInfo = TUNE ? { rest: [] } : bakeStatic([...Object.values(P).flatMap((p) => p.root.children), ...clouds, author.fig], Object.values(P).flatMap((p) => p.hit || []), (i) => {
   const t = i < 0 ? 0 : SIM[i], k = i < 0 ? 0 : i % 2;
   P.kuv.update(t, false); P.dub.update(t, false, k); P.fan.update(t, false); P.asf.update(t, false, k); P.home.update(t, false, k);
   heroes.update(t, false); life.update(t, k);
@@ -125,6 +127,7 @@ const bakeInfo = bakeStatic([...Object.values(P).flatMap((p) => p.root.children)
 // издалека герои в несколько пикселей — их не рисуем (облегчение, spec v0.8)
 const figs = []; Object.values(P).forEach((pl) => pl.root.traverse((o) => { if (o.userData.pose) figs.push(o); }));
 const figW = new THREE.Vector3();
+if (TUNE) import('./tune.js').then((m) => m.startTune({ P, DIVE, STATIONS, camera, canvas, renderer }));
 if (location.search.includes('debug')) window.__w = { P, scene, STATIONS, THREE, renderer, camera, bakeInfo }; // проверка перекрытий (scripts, Playwright)
 // подсказки у сюрпризов (spec v0.7): точка над каждым интерактивным объектом, к ней привязан ярлык из HTML (.tag-act)
 {
@@ -191,7 +194,29 @@ let target = 0, cur = 0;
 let fpsAt = 0; const fpsEl = location.search.includes('fps') ? Object.assign(document.body.appendChild(document.createElement('div')), { style: 'position:fixed;left:10px;top:10px;z-index:99;font:12px/1 monospace;background:#000a;color:#fff;padding:6px 8px;border-radius:6px;pointer-events:none' }) : null;
 let homeP = null, homeY = null, backUntil = 0; // где была главная, когда открыли страницу (spec v0.8)
 const camPos = V(10, 60, 90), camLook = V(40, 0, -30); let skyP = 0, first = true;
-const onScroll = () => { target = progress(); };
+const onScroll = () => { target = progress(); if (!snapping) armSnap(); };
+// Доводка скролла (spec v0.11, дизайнер): человек перестал листать между сценами — плавно доводим до ближайшей остановки.
+// Остановки — точки, где автор говорит: приветствие и планеты. Любое касание, колесо или клавиша доводку отменяют.
+const STOPS = [0, 0.16, 0.39, 0.61, 0.80, 0.88, 1]; // 0.88 — Город Снегов наверху лестницы
+let snapTimer = 0, snapping = false, snapRaf = 0;
+const yOf = (pv) => { // обратная к progress(): прокрутка, при которой прогресс = pv
+  for (let i = 0; i < anchors.length - 1; i++) { const [y0, p0] = anchors[i], [y1, p1] = anchors[i + 1]; if (pv <= p1) return y0 + (y1 - y0) * ((pv - p0) / Math.max(1e-6, p1 - p0)); }
+  return anchors[anchors.length - 1][0];
+};
+const stopSnap = () => { snapping = false; cancelAnimationFrame(snapRaf); clearTimeout(snapTimer); };
+function armSnap() {
+  clearTimeout(snapTimer);
+  snapTimer = setTimeout(() => {
+    if (document.querySelector('[data-world-view]') || document.querySelector(':popover-open') || anchors.length < 2) return;
+    const ys = STOPS.map(yOf), y = scrollY; let best = ys[0]; ys.forEach((v) => { if (Math.abs(v - y) < Math.abs(best - y)) best = v; });
+    if (Math.abs(best - y) < 4 || Math.abs(best - y) > innerHeight * 1.6) return; // уже на месте или далеко — не тянем
+    const from = y, t0 = performance.now(), dur = Math.min(900, 350 + Math.abs(best - y) * 0.6); snapping = true;
+    const step = (now) => { const k = Math.min(1, (now - t0) / dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      scrollTo({ top: from + (best - from) * e, behavior: 'instant' }); if (k < 1 && snapping) snapRaf = requestAnimationFrame(step); else snapping = false; };
+    snapRaf = requestAnimationFrame(step);
+  }, 220);
+}
+['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach((ev) => addEventListener(ev, stopSnap, { passive: true }));
 window.__snap = () => { target = progress(); cur = target; first = true; ready = 1; return target; }; // для съёмки постеров: без плавного появления
 addEventListener('scroll', onScroll, { passive: true });
 // Попап закрылся — браузер возвращает фокус на кнопку-табличку, а она висит над 3D (position: fixed).
@@ -206,7 +231,7 @@ const onPopBefore = (e) => { if (isPop(e.target) && e.newState === 'closed' && e
 const onPopToggle = (e) => {
   const el = e.target; if (!isPop(el)) return;
   if (e.newState === 'open') { popY.set(el, scrollY); return; }
-  if (popY.has(el)) keepY(popY.get(el));
+  if (popY.has(el) && el.id !== 'site-menu') keepY(popY.get(el)); // из меню уходят в другое место — позицию не держим
   if (invoker && invoker.isConnected) invoker.focus({ preventScroll: true });
 };
 document.addEventListener('click', onPopClick, true);
@@ -240,7 +265,7 @@ const onClick = (e) => {
   const t = e.target.closest('[data-dub],[data-smell],#lilyBtn'); if (!t) return;
   if (t.id === 'lilyBtn') lily();
   else if (t.dataset.dub) say(P.dub.press(t.dataset.dub), P.dub.anchorOf(t.dataset.dub));
-  else if (t.dataset.smell) say(P.fan.press(t.dataset.smell), P.fan.anchorOf(t.dataset.smell));
+  else if (t.dataset.smell) say(P.fan.press(t.dataset.smell), ANCH[`fan.act.${t.dataset.smell}`] || P.fan.anchorOf(t.dataset.smell)); // подпись — над самим предметом
 };
 document.addEventListener('click', onClick);
 
@@ -265,7 +290,7 @@ canvas.addEventListener('click', (e) => {
   const [kind, k, obj] = h;
   if (kind === 'planet') { if (k !== curZone) flyTo(k); return; }
   if (k === 'kuv') lily();
-  else { const id = P[k].pick(obj); if (id) say(P[k].press(id), P[k].anchorOf(id)); }
+  else { const id = P[k].pick(obj); if (id) say(P[k].press(id), ANCH[`${k}.act.${id}`] || P[k].anchorOf(id)); }
 });
 let lastMove = 0;
 canvas.addEventListener('pointermove', (e) => { const n = performance.now(); if (n - lastMove < 120) return; lastMove = n; const h = hitTest(e); canvas.style.cursor = h && (h[0] === 'act' || h[1] !== curZone) ? 'pointer' : ''; });
@@ -439,7 +464,7 @@ lily(0);
 tick();
 return () => {
   cancelAnimationFrame(raf); document.removeEventListener('visibilitychange', onVis);
-  removeEventListener('scroll', onScroll); removeEventListener('resize', resize); ro.disconnect();
+  removeEventListener('scroll', onScroll); stopSnap(); ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach((ev) => removeEventListener(ev, stopSnap)); removeEventListener('resize', resize); ro.disconnect();
   document.removeEventListener('click', onClick); document.removeEventListener('toggle', onPopToggle, true); document.removeEventListener('beforetoggle', onPopBefore, true); document.removeEventListener('click', onPopClick, true);
   root.classList.remove('night'); delete root.dataset.zone; delete root.dataset.planet; delete root.dataset.say;
   painter.dispose();

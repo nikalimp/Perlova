@@ -412,7 +412,38 @@ html[data-say="home"] .say[data-say="home"].on { visibility: visible; opacity: 1
 .say-play svg { width: 26px; height: 26px; fill: currentColor; }
 .say-play:not([aria-pressed="true"]) svg { margin-left: 3px; } /* оптически по центру треугольника */
 .say-play:hover { transform: scale(1.06); }
-@media (prefers-reduced-motion: no-preference) { .say-play:not([aria-pressed="true"]) { animation: play-pulse 2.2s ease-in-out infinite; } }
-@keyframes play-pulse { 0%, 100% { box-shadow: 0 8px 20px oklch(0.544 0.187 344.5 / 35%), 0 0 0 0 oklch(0.544 0.187 344.5 / 35%); } 50% { box-shadow: 0 8px 20px oklch(0.544 0.187 344.5 / 35%), 0 0 0 10px oklch(0.544 0.187 344.5 / 0%); } }
 .music-toggle svg { width: 22px; height: 22px; }
 @media (max-width: 640px) { .music-toggle { bottom: auto; top: calc(12px + env(safe-area-inset-top, 0px)); } } /* на телефоне внизу — реплика автора */
+
+/* кнопка ▶: расходящиеся круги, как на воде, — видно, что её можно нажать (spec v0.11) */
+.say-play { position: relative; }
+.say-play::before, .say-play::after { content: ""; position: absolute; inset: 0; border-radius: 999px; border: 2px solid var(--accent); opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .say-play:not([aria-pressed="true"])::before { animation: play-ripple 2.4s ease-out infinite; }
+  .say-play:not([aria-pressed="true"])::after { animation: play-ripple 2.4s ease-out 1.2s infinite; }
+}
+@keyframes play-ripple { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(2.1); opacity: 0; } }
+
+/* подсказка «листайте вниз» — только на первом экране мира */
+.scroll-hint { display: none; }
+.has-world .scroll-hint { display: flex; position: fixed; z-index: 6; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; flex-direction: column; align-items: center; gap: 6px;
+  font-family: var(--font-hand); font-size: 20px; color: var(--foreground); opacity: 0; visibility: hidden; transition: opacity .4s, visibility 0s linear .4s; pointer-events: none; }
+html.has-world[data-zone="intro"]:not(.world-loading) .scroll-hint { opacity: .85; visibility: visible; transition: opacity .6s .8s; }
+.scroll-hint-mouse { width: 24px; height: 38px; border: 2px solid currentColor; border-radius: 14px; position: relative; }
+.scroll-hint-mouse::after { content: ""; position: absolute; left: 50%; top: 7px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: currentColor; }
+@media (prefers-reduced-motion: no-preference) { .scroll-hint-mouse::after { animation: wheel-roll 1.6s ease-in-out infinite; } }
+@keyframes wheel-roll { 0% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(12px); opacity: 0; } 100% { opacity: 0; } }
+@media (max-width: 640px) { .has-world .scroll-hint { bottom: auto; top: calc(14px + env(safe-area-inset-top, 0px)); flex-direction: column-reverse; } } /* на телефоне внизу — реплика автора; подсказка сверху */
+
+/* бургер-меню (spec v0.11): круглая кнопка справа сверху, меню — лист бумаги */
+.burger { position: fixed; z-index: 9; right: calc(14px + env(safe-area-inset-right, 0px)); top: calc(14px + env(safe-area-inset-top, 0px)); width: 46px; height: 46px; border-radius: 999px;
+  display: grid; place-items: center; background: var(--paper); color: var(--ink); box-shadow: 0 8px 22px oklch(0.2 0.03 300 / 22%); cursor: pointer; }
+.burger svg { width: 22px; height: 22px; }
+.burger:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+.pop-menu { margin: calc(70px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-right, 0px)) auto auto; width: min(340px, calc(100vw - 28px)); max-height: calc(100dvh - 90px); }
+.pop-menu .menu-h { font-size: 17px; color: var(--ink-soft); margin: 10px 0 0; }
+.pop-menu .menu-h:first-of-type { margin-top: 0; }
+.pop-menu ul { list-style: none; margin: 0; padding: 0; }
+.pop-menu li a { font-size: 23px; line-height: 30px; }
+.pop-menu .menu-books li a { font-size: 20px; }
+.pop-menu .pop-close svg { width: 24px; height: 24px; }
