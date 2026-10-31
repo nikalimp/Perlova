@@ -53,7 +53,8 @@ export default function Home() {
             <h1 className="say-title">{say.intro.h1}</h1>
             <p>{say.intro.answer}</p>
             <p className="mt-2">{say.intro.invite}</p>
-            <p className="world-only mt-2">{say.intro.music}<br /><MusicButton /></p>
+            <p className="world-only mt-2">{say.intro.music}</p>
+            <div className="world-only say-play-row"><MusicButton /></div>
           </div>
         </section>
 

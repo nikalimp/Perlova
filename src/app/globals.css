@@ -396,17 +396,23 @@ html[data-say="home"] .say[data-say="home"].on { visibility: visible; opacity: 1
 .preloader-ring span { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-hand); font-size: 40px; font-weight: 700; color: var(--foreground); font-variant-numeric: tabular-nums; }
 
 /* музыка (spec v0.8): кнопка в первой реплике и нота в углу, пока играет */
-.say-music { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-hand); font-size: 21px; font-weight: 700; color: var(--accent); text-decoration: underline; text-decoration-style: wavy; text-underline-offset: 5px; cursor: pointer; }
-.say-music span { text-decoration: none; display: inline-block; }
 .music-toggle { position: fixed; z-index: 9; left: calc(14px + env(safe-area-inset-left, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); width: 44px; height: 44px; border-radius: 999px;
   display: grid; place-items: center; background: var(--paper); color: var(--accent); font-size: 22px; box-shadow: 0 8px 22px oklch(0.2 0.03 300 / 22%); cursor: pointer; }
-.music-toggle:focus-visible, .say-music:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
-@media (prefers-reduced-motion: no-preference) { .music-toggle span { animation: note-bob 1.6s ease-in-out infinite; } }
-@keyframes note-bob { 50% { transform: translateY(-3px) rotate(-8deg); } }
-@media (max-width: 640px) { .music-toggle { bottom: auto; top: calc(12px + env(safe-area-inset-top, 0px)); } }
+.music-toggle:focus-visible, .say-play:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
 
 /* страница поверх мира — лист по центру, мир за ним притушен (spec v0.8) */
 .has-world .panel { top: 50%; left: 50%; right: auto; bottom: auto; translate: -50% -50%; width: min(760px, calc(100vw - 32px)); height: auto; max-height: calc(100dvh - 48px); }
 @media (max-width: 900px) { .has-world .panel { top: 50%; left: 50%; right: auto; bottom: auto; width: calc(100vw - 24px); height: auto; max-height: calc(100dvh - 32px); border-radius: 3px 4px 7px 3px; } }
 .has-world main:has(.panel)::before { content: ""; position: fixed; inset: 0; z-index: 7; background: oklch(0.2 0.04 300 / 32%); }
 @keyframes panel-in { from { opacity: 0; scale: 0.96; } }
+
+/* музыка (spec v0.10): круглая ▶ по центру первой реплики, звук вкл/выкл — слева внизу */
+.say-play-row { display: flex !important; justify-content: center; margin-top: 10px; }
+.say-play { width: 60px; height: 60px; border-radius: 999px; display: grid; place-items: center; background: var(--accent); color: var(--accent-foreground); box-shadow: 0 8px 20px oklch(0.544 0.187 344.5 / 35%); cursor: pointer; transition: transform .2s; }
+.say-play svg { width: 26px; height: 26px; fill: currentColor; }
+.say-play:not([aria-pressed="true"]) svg { margin-left: 3px; } /* оптически по центру треугольника */
+.say-play:hover { transform: scale(1.06); }
+@media (prefers-reduced-motion: no-preference) { .say-play:not([aria-pressed="true"]) { animation: play-pulse 2.2s ease-in-out infinite; } }
+@keyframes play-pulse { 0%, 100% { box-shadow: 0 8px 20px oklch(0.544 0.187 344.5 / 35%), 0 0 0 0 oklch(0.544 0.187 344.5 / 35%); } 50% { box-shadow: 0 8px 20px oklch(0.544 0.187 344.5 / 35%), 0 0 0 10px oklch(0.544 0.187 344.5 / 0%); } }
+.music-toggle svg { width: 22px; height: 22px; }
+@media (max-width: 640px) { .music-toggle { bottom: auto; top: calc(12px + env(safe-area-inset-top, 0px)); } } /* на телефоне внизу — реплика автора */
