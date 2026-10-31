@@ -3,6 +3,23 @@ import * as THREE from 'three';
 
 export { THREE };
 
+// ЛАБОРАТОРИЯ СТИЛЕЙ (локально, не для main): ?style=watercolor|clay|toon|gouache|pencil|riso|ink|cutout|pixel|lowpoly|stitch
+export const STYLE = (typeof location !== 'undefined' && new URLSearchParams(location.search).get('style')) || 'watercolor';
+let toonRamp;
+function ramp() {
+  if (toonRamp) return toonRamp;
+  toonRamp = new THREE.DataTexture(new Uint8Array([90, 170, 255]), 3, 1, THREE.RedFormat);
+  toonRamp.minFilter = toonRamp.magFilter = THREE.NearestFilter; toonRamp.needsUpdate = true;
+  return toonRamp;
+}
+function makeMat(color, rough, extra) {
+  const { wireframe, ...rest } = extra;
+  if (STYLE === 'toon') return new THREE.MeshToonMaterial({ color, gradientMap: ramp(), wireframe, ...rest });
+  if (STYLE === 'lowpoly') return new THREE.MeshLambertMaterial({ color, flatShading: true, wireframe, ...rest });
+  const paperMap = ['watercolor', 'gouache', 'pencil', 'ink'].includes(STYLE) && !wireframe ? paper() : null;
+  return new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0, map: paperMap, ...extra });
+}
+
 // Акварельная бумага (spec v0.4): пятна пигмента и зерно, тайлится. Один холст на все материалы.
 let paperTex;
 function paper() {
@@ -35,7 +52,7 @@ function paper() {
 const matCache = new Map();
 export const clay = (color, rough = 0.82, extra = {}) => {
   const key = color + '|' + rough + '|' + JSON.stringify(extra);
-  if (!matCache.has(key)) matCache.set(key, new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0, map: extra.wireframe ? null : paper(), ...extra }));
+  if (!matCache.has(key)) matCache.set(key, makeMat(color, rough, extra));
   return matCache.get(key);
 };
 export const glow = (color, intensity = 1.6) => clay(color, 0.5, { emissive: color, emissiveIntensity: intensity });
