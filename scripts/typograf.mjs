@@ -1,4 +1,5 @@
 // Типограф для исходников сайта: правит видимый русский текст в src/**/*.ts(x).
+// @nikitos-shared typograf.mjs — общая версия в nikalimp/deploy-kit/shared; проектные проверки — scripts/check.local.mjs
 // Трогает только текст в JSX и строковые литералы с кириллицей; код, классы, URL, типы — нет.
 // Запускается сам перед каждой сборкой (prebuild). Вручную: npm run typograf  ·  проверка: npm run typograf:check
 import fs from "node:fs";
