@@ -1,4 +1,5 @@
 // IndexNow: сообщаем Яндексу и Bing, какие страницы появились или изменились, — без ожидания обхода.
+// @nikitos-shared indexnow.mjs — общая версия в nikalimp/deploy-kit/shared; проектные проверки — scripts/check.local.mjs
 // Запуск в GitHub Actions (deploy-site.yml):
 //   node scripts/indexnow.mjs prepare  — после сборки: сравнивает текст страниц из sitemap с прошлой выкладкой
 //                                        (out/indexnow-state.json на сайте), пишет новый state и список изменённых URL

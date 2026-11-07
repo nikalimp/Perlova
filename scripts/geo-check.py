@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# @nikitos-shared geo-check.py — общая версия в nikalimp/deploy-kit/shared
 """
 geo-check.py — техническая проверка сайта по стандарту [[GEO-аудит]] (блок 2 и часть блока 4).
 
