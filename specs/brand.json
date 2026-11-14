@@ -1,0 +1,26 @@
+{
+  "name": "Евгения Перлова",
+  "site": "https://perlova.nikalimp.ru",
+  "siteLabel": "perlova.nikalimp.ru · тестовый домен",
+  "author": "Евгения Перлова",
+  "logo": "../public/brand/sign.svg",
+  "font": {
+    "family": "Golos Text Variable",
+    "source": "fontsource:golos-text"
+  },
+  "colors": {
+    "bg": "oklch(0.968 0.015 70.9)",
+    "fg": "oklch(0.312 0.043 318.0)",
+    "card": "oklch(0.987 0.010 72.7)",
+    "muted": "oklch(0.933 0.020 58.1)",
+    "mfg": "oklch(0.493 0.039 324.6)",
+    "border": "oklch(0.898 0.025 49.7)",
+    "brand": "oklch(0.493 0.075 187.7)",
+    "brandBg": "oklch(0.933 0.020 58.1)",
+    "onBrand": "oklch(1 0 0)",
+    "shade": "oklch(0.226 0.053 281.2)"
+  },
+  "radius": 20,
+  "pattern": "dots",
+  "blogPath": "/blog/"
+}
