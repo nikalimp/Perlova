@@ -1,0 +1,22 @@
+{
+  "project": "Евгения Перлова",
+  "repo": "nikalimp/perlova",
+  "site_dir": ".",
+  "url": "https://perlova.nikalimp.ru",
+  "adapter": "ssh-ftp",
+  "mode": "approval",
+  "content_dir": "content",
+  "factory": "",
+  "schedule": {
+    "daily": "09:05",
+    "weekly": "mon 08:50",
+    "tz": "Europe/Moscow",
+    "days": "1-5"
+  },
+  "version": 1,
+  "notes": "тестовая выкладка — поддомен perlova.nikalimp.ru на REG.RU Ника, FTP (SSH из Actions на REG.RU закрыт); без SEO и Метрики до боевого домена; контент-завода нет (factory пусто, блог выключен флагом)",
+  "out_dir": "out",
+  "app_path": "",
+  "rsync_exclude": "",
+  "manual_script": "scripts/deploy-site.sh"
+}
