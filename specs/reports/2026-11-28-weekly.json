@@ -1,0 +1,27 @@
+{
+  "title": "Отчёт недели: Евгения Перлова",
+  "period": "23.11–29.11.2026",
+  "date": "28.11.2026",
+  "kpi": [
+    {
+      "label": "Домен",
+      "value": "Тест",
+      "note": "perlova.nikalimp.ru"
+    },
+    {
+      "label": "Доступность",
+      "value": "200",
+      "note": "все 7 ботов — 200"
+    },
+    {
+      "label": "site-audit Must",
+      "value": "0",
+      "note": "1 Should (Метрика)"
+    },
+    {
+      "label": "PageSpeed mob.",
+      "value": "27",
+      "note": "+2 к 14.11 · CLS 1"
+    }
+  ]
+}
